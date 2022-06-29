@@ -1,0 +1,113 @@
+<comment>
+problem   = Turbulence with power-law PS
+reference =
+configure = --prob=turb -fft
+
+<job>
+problem_id = Turb    # problem ID: basename of output filenames
+
+<output1>
+file_type  = hst        # History data dump
+dt         = !!HST_DT!!      # time increment between outputs
+
+<output2>
+file_type  = hdf5        # Binary data dump
+variable   = prim       # variables to be output
+dt         = !!OUT_DT!!       # time increment between outputs
+
+<output3>
+file_type  = rst       
+dt         = !!RST_DT!!       
+
+<time>
+cfl_number = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim       = -1   # cycle limit
+tlim       = !!TLIM!!       # time limit
+integrator  = rk2       # time integration algorithm
+xorder      = 2         # order of spatial reconstruction
+ncycle_out  = 1         # interval for stdout summary info
+
+<mesh>
+nx1        = !!NX1!!        # Number of zones in X1-direction
+x1min      = !!X1MIN!!       # minimum value of X1
+x1max      = !!X1MAX!!        # maximum value of X1
+ix1_bc     = periodic   # inner-X1 boundary flag
+ox1_bc     = periodic   # outer-X1 boundary flag
+
+nx2        = !!NX2!!        # Number of zones in X2-direction
+x2min      = !!X2MIN!!       # minimum value of X2
+x2max      = !!X2MAX!!        # maximum value of X2
+ix2_bc     = periodic   # inner-X2 boundary flag
+ox2_bc     = periodic   # outer-X2 boundary flag
+
+nx3        = !!NX3!!        # Number of zones in X3-direction
+x3min      = !!X3MIN!!       # minimum value of X3
+x3max      = !!X3MAX!!        # maximum value of X3
+ix3_bc     = periodic   # inner-X3 boundary flag
+ox3_bc     = periodic   # outer-X3 boundary flag
+
+refinement = none
+
+<meshblock>
+nx1        = !!NX1_MESH!! 
+nx2        = !!NX2_MESH!!
+nx3        = !!NX3_MESH!!
+
+<refinement1>
+x1min      = !!X1MIN!!
+x1max      = !!X1MAX!!
+x2min      = !!X2MIN!!
+x2max      = !!X2MAX!!
+x3min      = !!X3MIN!!
+x3max      = !!X3MAX!!
+level      = 1
+
+<hydro>
+gamma      = 1.666666666667 # gamma = C_p/C_v
+pfloor     = !!P_FLOOR!!
+
+<turbulence>
+dedt       = !!DEDT!!    # Energy injection rate (for driven) or Total energy (for decaying)
+nlow       = 0         # cut-off wavenumber at low-k
+nhigh      = 2         # cut-off wavenumber at high-k
+expo       = 2.0       # power-law exponent
+tcorr      = !!T_CORR!!  # correlation time for OU process (both impulsive and continuous)
+dtdrive    = !!DT_DRIVE!!  # time interval between perturbation (impulsive)
+f_shear    = !!F_SHEAR!!   # the ratio of the shear component
+rseed      = !!RSEED!!   # if non-negative, seed will be set by hand (slow PS generation)
+
+<problem>
+turb_flag    = 2    # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
+
+# User-defined variables:
+
+cooling_flag = !!COOL_FLAG!!    # 0 for no cooling and >0 for cooling
+cloud_flag   = !!CLOUD_FLAG!!   # 0 for no cloud and >0 for a cloud
+
+amb_rho      = !!AMB_RHO!!      # Density of the ambient medium
+
+cloud_radius = !!CLOUD_RADIUS!! # in code units
+cloud_time   = !!CLOUD_TIME!!   # Time of insertion of cloud (in code units)
+cloud_chi    = !!CLOUD_CHI!!    # Density contrast of the cloud
+
+cloud_mom_conserve = !!CLOUD_MOM_CONS!! # Flag for cloud init type
+
+T_floor      = !!T_FLOOR!!      # Floor temperature
+T_ceil       = !!T_CEIL!!       # Ceiling temperature
+T_hot_req    = !!T_HOT_REQ!!    # Hot medium temperature required
+T_hot        = !!T_HOT!!        # Hot medium temperature initiated
+T_cold       = !!T_COLD!!       # Cold medium temperature
+T_cut_mul    = !!T_CUT_MUL!!    # T_cut = T_hot_req * T_cut_mul
+T_cut        = !!T_CUT!!        # T_cut = T_hot_req * T_cut_mul
+
+X            = !!X!!       # H-abundance
+Y            = !!Y!!       # He-abundance
+Z            = !!Z!!       # Metallicity
+
+cloud_pos_x  = !!CLOUD_POS_X!!       # Cloud center x-coordinate
+cloud_pos_y  = !!CLOUD_POS_Y!!       # Cloud center y-coordinate
+cloud_pos_z  = !!CLOUD_POS_Z!!       # Cloud center z-coordinate
+
+B_x          = !!B_X!!      # Magnetic field in x-direction
+B_y          = !!B_Y!!      # Magnetic field in y-direction
+B_z          = !!B_Z!!      # Magnetic field in z-direction
