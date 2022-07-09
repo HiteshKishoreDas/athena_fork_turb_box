@@ -15,7 +15,7 @@
 #include <stdexcept>
 
 //! Remove if not required
-// #include <algorithm>  // max()
+#include <algorithm>  // max()
 // #include <string>     // c_str(), string
 
 // Athena++ headers
@@ -36,6 +36,18 @@
 
 #include "../utils/townsend_cooling.hpp"  // T_new()
 #include "../utils/hst_func.hpp"          // All history output functions
+#include "../utils/code_units.hpp"
+
+// Cooling
+// unique_ptr<Cooling> cooler;
+
+static Real tfloor, tnotcool, tcut_hst, r_drop;
+static Real Lambda_fac, Lambda_fac_time; // for boosting cooling
+
+static Real total_cooling;
+
+
+
 
 #ifdef OPENMP_PARALLEL
 #include <omp.h>
@@ -193,30 +205,38 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
 
         if (temp > T_floor) {
 
-          Real *lam_para = Lam_file_read(temp);
+            Real *lam_para = Lam_file_read(temp);
 
-          //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
+            //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
 
+            auto rho = cons(IDN,k,j,i);
 
-          Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
-                                prim(IDN,k,j,i), dt, 
-                                mu, mue, muH, 
-                                g, T_floor, T_ceil, T_cut);
+            // auto temp_cgs = temp * unit_temp;
+            // auto rho_cgs  = rho  * unit_density;
+            // auto dt_cgs   = dt   * unit_time;
+            // auto cLfac = 1.0;
 
-                        // Defined in ../utils/townsend_cooling.hpp
+            // Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
 
-          // ** NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
-          // ** calculation of T_new as we calculate (dt/tcool)
+            Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
+                                    prim(IDN,k,j,i), dt, 
+                                    mu, mue, muH, 
+                                    g, T_floor, T_ceil, T_cut);
 
-          cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+                            // Defined in ../utils/townsend_cooling.hpp
 
-          // ________________________________
-          // FOR DEBUG PURPOSES
-          if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
+            // ** NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
+            // ** calculation of T_new as we calculate (dt/tcool)
 
-            printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
-          }
-          // ________________________________
+            cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+
+            // ________________________________
+            // FOR DEBUG PURPOSES
+            if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
+
+                printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
+            }
+            // ________________________________
 
 
           
@@ -327,154 +347,6 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 }
 
 
-//* To add clouds during restarts
-void MeshBlock::InitUserMeshBlockData(ParameterInput *pin){
-
-    Real g = peos->GetGamma();
-
-    Real cloud_r  = cloud_radius;
-    Real sim_time = pmy_mesh->time;
-    Real t_cloud  = cloud_time;
-
-    printf("InitUserMeshBlockData test: %lf \n", phydro->u(IDN,0,0,0));
-
-    //* Rescale temperatures to T_hot_req
-    if (temp_rescale_flag && (sim_time > 0.75*t_cloud)){
-
-      Real local_T_sum_1 = 0.0;
-      Real global_T_sum_1;
-
-      // Calculate average temperature before rescaling
-      for (int k = ks; k <= ke; ++k) {
-        for (int j = js; j <= je; ++j) {
-          for (int i = is; i <= ie; ++i) {
-
-            Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
-            
-            local_T_sum_1 += temp;
-
-          }
-        }
-      }
-
-      MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
-
-      Real N_cells = n1*n2*n3;
-      Real T_avg = global_T_sum_1/N_cells; //* Average temperature
-
-      // Rescaling the temperature
-      for (int k = ks; k <= ke; ++k) {
-        for (int j = js; j <= je; ++j) {
-          for (int i = is; i <= ie; ++i) {
-
-            Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
-            Real T_new = temp*(T_hot_req/T_avg);
-
-            phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
-
-          }
-        }
-      }
-
-     temp_rescale_flag = false; 
-
-    }
-
-
-    //* Inserting the cloud
-    if (cloud_init_flag && (sim_time > 0.75*t_cloud)){
-
-        for (int k = ks; k <= ke; ++k) {
-            Real z_coord = pcoord->x3v(k);
-
-            for (int j = js; j <= je; ++j) {
-                Real y_coord = pcoord->x2v(j);
-
-                for (int i = is; i <= ie; ++i) {
-                    Real x_coord = pcoord->x1v(i);
-
-                    
-                    Real dist = (x_coord-cloud_pos_x)*(x_coord-cloud_pos_x);
-                    dist     += (y_coord-cloud_pos_y)*(y_coord-cloud_pos_y);
-                    dist     += (z_coord-cloud_pos_z)*(z_coord-cloud_pos_z);
-
-                    // Inside the cloud region
-                    if(dist <= cloud_r*cloud_r){
-
-                        Real temp = (phydro->w(IPR,k,j,i)/phydro->u(IDN,k,j,i)) * KELVIN * mu;
-
-                        Real chi_lim = std::min(cloud_chi,temp/T_floor);
-
-                        Real rho_temp = phydro->u(IDN,k,j,i);
-
-                        //Initial energy ______________________________________//
-
-                        Real TE_in = phydro->u(IEN,k,j,i);
-
-                        Real KE_in = phydro->u(IM1,k,j,i)*phydro->u(IM1,k,j,i);
-                        KE_in += phydro->u(IM2,k,j,i)*phydro->u(IM2,k,j,i);
-                        KE_in += phydro->u(IM3,k,j,i)*phydro->u(IM3,k,j,i);
-                        KE_in /= 2.0*phydro->u(IDN,k,j,i);
-
-                        Real BE_in = 0.0;
-                        if (MAGNETIC_FIELDS_ENABLED) {
-                            BE_in += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
-                            BE_in += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
-                            BE_in += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
-                        }
-
-                        Real IE_in = TE_in - KE_in - BE_in;
-
-                        //_______________________________________________________//
-
-                        phydro->u(IDN,k,j,i) *= chi_lim;//*2.0;
-
-                        phydro->u(IM1,k,j,i) /= sqrt(chi_lim);//*2.0;
-                        phydro->u(IM2,k,j,i) /= sqrt(chi_lim);//*2.0;
-                        phydro->u(IM3,k,j,i) /= sqrt(chi_lim);//*2.0;
-
-
-                        //Final energy _________________________________________//
-
-                        Real TE_fn = phydro->u(IEN,k,j,i);
-
-                        Real KE_fn = phydro->u(IM1,k,j,i)*phydro->u(IM1,k,j,i);
-                        KE_fn += phydro->u(IM2,k,j,i)*phydro->u(IM2,k,j,i);
-                        KE_fn += phydro->u(IM3,k,j,i)*phydro->u(IM3,k,j,i);
-                        KE_fn /= 2.0*phydro->u(IDN,k,j,i);
-
-                        Real BE_fn = 0.0;
-                        if (MAGNETIC_FIELDS_ENABLED) {
-
-                            BE_fn += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
-                            BE_fn += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
-                            BE_fn += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
-
-                        }
-
-                        Real IE_fn = TE_fn - KE_fn - BE_fn;
-
-                        //_______________________________________________________//
-
-                        phydro->u(IEN,k,j,i) = IE_in + KE_fn + BE_fn;
-
-                    }
-                }
-            }
-        }
-
-        printf("________________________________\n");
-        printf("Cloud added!_______ %d, %lf /n",cloud_init_flag, sim_time);
-        printf("________________________________\n");
-        
-        cloud_init_flag = false;
-
-    }
-
-    return;
-
-}
-
 
 
 //========================================================================================
@@ -485,6 +357,10 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin){
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
   Real g   = pin->GetReal("hydro","gamma");
+
+  // Real l_shatter = cooler->tcool(tfloor * unit_temp,
+	// 			 drat * t_drop / tfloor * unit_rho) / unit_time * \
+  //   sqrt(gamma * tfloor);
 
 
   // * Read static variables from the input file
@@ -557,6 +433,14 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
 }
 
+// Returns unique pointer
+// This is a function in C++13 onwards
+// The implementation here is copied from https://stackoverflow.com/a/17903225/1834164
+// template<typename T, typename... Args>
+// std::unique_ptr<T> make_unique(Args&&... args)
+// {
+  // return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+// }
 
 //========================================================================================
 //! \fn void Mesh::UserWorkAfterLoop(ParameterInput *pin)

@@ -52,6 +52,11 @@
 #include "mesh_refinement.hpp"
 #include "meshblock_tree.hpp"
 
+
+//! NEW!
+// #include "../utils/townsend_cooling.hpp"
+#include "../utils/code_units.hpp"
+
 // MPI/OpenMP header
 #ifdef MPI_PARALLEL
 #include <mpi.h>
@@ -893,6 +898,8 @@ Mesh::Mesh(ParameterInput *pin, IOWrapper& resfile, int mesh_test) :
 
   if (turb_flag > 0) // TurbulenceDriver depends on the MeshBlock ctor
     ptrbd = new TurbulenceDriver(this, pin);
+
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -1649,6 +1656,202 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
   for (int i=0; i<nblocal; ++i) {
     my_blocks(i)->phydro->NewBlockTimeStep();
   }
+
+
+//*_________________________________
+//! NEW STUFF ADDED BELOW -Hitesh
+//*_________________________________
+
+  int cloud_flag = pin->GetInteger("problem","cloud_flag");
+
+  if (cloud_flag==1){
+
+    Real g = pin->GetReal("hydro","gamma");
+
+    Real cloud_r  = pin->GetReal("problem","cloud_radius");
+    Real t_cloud  = pin->GetReal("problem","cloud_time");
+
+    Real cloud_chi = pin->GetReal("problem","cloud_chi");
+    
+    Real T_floor = pin->GetReal("problem","T_floor");
+
+    Real cloud_pos_x = pin->GetReal("problem","cloud_pos_x");
+    Real cloud_pos_y = pin->GetReal("problem","cloud_pos_y");
+    Real cloud_pos_z = pin->GetReal("problem","cloud_pos_z");
+
+    Real T_hot_req  = pin->GetReal("problem","T_hot_req");
+
+    Real sim_time = time;
+    
+    Real Xsol = pin->GetReal("problem","Xsol");
+    Real Zsol = pin->GetReal("problem","Zsol");
+
+    Real X = Xsol * 0.7381;
+    Real Z = Zsol * 0.0134;
+    Real Y = 1 - X - Z;
+
+    Real mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
+    Real mue = 2.0/(1.0+X);
+    Real muH = 1.0/X;
+
+    if (sim_time > 0.75*t_cloud){
+
+      //* Rescale temperatures
+      for (int b=0; b<nblocal; ++b) {
+
+        MeshBlock *pmb = my_blocks(b);
+    
+        Real local_T_sum_1 = 0.0;
+        Real global_T_sum_1;
+
+        // Calculate average temperature before rescaling
+        for (int k = pmb->ks; k <= pmb->ke; ++k) {
+          for (int j = pmb->js; j <= pmb->je; ++j) {
+            for (int i = pmb->is; i <= pmb->ie; ++i) {
+
+              Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+              
+              local_T_sum_1 += temp;
+
+            }
+          }
+        }//End of for loop over domain
+
+        MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
+
+        Real N_cells = nbtotal*(pmb->ke-pmb->ks+1)*(pmb->je-pmb->js+1)*(pmb->ie-pmb->is+1);
+        Real T_avg = global_T_sum_1/N_cells; //* Average temperature
+
+
+        // Rescaling the temperature
+        for (int k = pmb->ks; k <= pmb->ke; ++k) {
+          for (int j = pmb->js; j <= pmb->je; ++j) {
+            for (int i = pmb->is; i <= pmb->ie; ++i) {
+
+              Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+              Real T_new = temp*(T_hot_req/T_avg);
+
+              pmb->phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*pmb->phydro->u(IDN,k,j,i)/(g-1);
+
+            }
+          }
+        } //End of for loop over domain
+
+      } // End of loop over meshblocks
+
+      printf("______________________________\n");
+      printf("__Temperature rescaled!_______\n");
+      printf("______________________________\n");
+
+
+      //* Adding the cloud
+      for (int b=0; b<nblocal; ++b) {
+        
+        MeshBlock *pmb = my_blocks(b);
+
+
+        for (int k = pmb->ks; k <= pmb->ke; ++k) {
+          Real z_coord = pmb->pcoord->x3v(k);
+
+          for (int j = pmb->js; j <= pmb->je; ++j) {
+            Real y_coord = pmb->pcoord->x2v(j);
+
+            for (int i = pmb->is; i <= pmb->ie; ++i) {
+              Real x_coord = pmb->pcoord->x1v(i);
+
+              
+              Real dist = (x_coord-cloud_pos_x)*(x_coord-cloud_pos_x);
+              dist     += (y_coord-cloud_pos_y)*(y_coord-cloud_pos_y);
+              dist     += (z_coord-cloud_pos_z)*(z_coord-cloud_pos_z);
+
+              // Inside the cloud region
+              if(dist <= cloud_r*cloud_r){
+
+                Real temp = (pmb->phydro->w(IPR,k,j,i)/pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu;
+
+                Real chi_lim = std::min(cloud_chi,temp/T_floor);
+
+                Real rho_temp = pmb->phydro->u(IDN,k,j,i);
+
+                //Initial energy ______________________________________//
+
+                Real TE_in = pmb->phydro->u(IEN,k,j,i);
+
+                Real KE_in = pmb->phydro->u(IM1,k,j,i)*pmb->phydro->u(IM1,k,j,i);
+                KE_in += pmb->phydro->u(IM2,k,j,i)*pmb->phydro->u(IM2,k,j,i);
+                KE_in += pmb->phydro->u(IM3,k,j,i)*pmb->phydro->u(IM3,k,j,i);
+                KE_in /= 2.0*pmb->phydro->u(IDN,k,j,i);
+
+                Real BE_in = 0.0;
+                if (MAGNETIC_FIELDS_ENABLED) {
+                    BE_in += 0.5 * pmb->pfield->b.x1f(k,j,i) * pmb->pfield->b.x1f(k,j,i);
+                    BE_in += 0.5 * pmb->pfield->b.x2f(k,j,i) * pmb->pfield->b.x2f(k,j,i);
+                    BE_in += 0.5 * pmb->pfield->b.x3f(k,j,i) * pmb->pfield->b.x3f(k,j,i);
+                }
+
+                Real IE_in = TE_in - KE_in - BE_in;
+
+                //_______________________________________________________//
+
+                pmb->phydro->u(IDN,k,j,i) *= chi_lim;//*2.0;
+
+                pmb->phydro->u(IM1,k,j,i) /= sqrt(chi_lim);//*2.0;
+                pmb->phydro->u(IM2,k,j,i) /= sqrt(chi_lim);//*2.0;
+                pmb->phydro->u(IM3,k,j,i) /= sqrt(chi_lim);//*2.0;
+
+
+                //Final energy _________________________________________//
+
+                Real TE_fn = pmb->phydro->u(IEN,k,j,i);
+
+                Real KE_fn = pmb->phydro->u(IM1,k,j,i)*pmb->phydro->u(IM1,k,j,i);
+                KE_fn += pmb->phydro->u(IM2,k,j,i)*pmb->phydro->u(IM2,k,j,i);
+                KE_fn += pmb->phydro->u(IM3,k,j,i)*pmb->phydro->u(IM3,k,j,i);
+                KE_fn /= 2.0*pmb->phydro->u(IDN,k,j,i);
+
+                Real BE_fn = 0.0;
+                if (MAGNETIC_FIELDS_ENABLED) {
+
+                    BE_fn += 0.5 * pmb->pfield->b.x1f(k,j,i) * pmb->pfield->b.x1f(k,j,i);
+                    BE_fn += 0.5 * pmb->pfield->b.x2f(k,j,i) * pmb->pfield->b.x2f(k,j,i);
+                    BE_fn += 0.5 * pmb->pfield->b.x3f(k,j,i) * pmb->pfield->b.x3f(k,j,i);
+
+                }
+
+                Real IE_fn = TE_fn - KE_fn - BE_fn;
+
+                //_______________________________________________________//
+
+                pmb->phydro->u(IEN,k,j,i) = IE_in + KE_fn + BE_fn;
+
+                printf("Cloud added here! :) \n");
+                printf("Density: %lf\n", pmb->phydro->u(IDN,k,j,i));
+
+              } // If condition on cloud region closed
+            }
+          }
+        } // End of loop over domain
+
+
+      } // End of loop over meshblocks
+
+      
+      printf("______________________________\n");
+      printf("__Cloud added!________________\n");
+      printf("______________________________\n");
+
+    
+    
+    } // If condition for time closed
+
+
+
+  } // If condition for cloud_flag closed
+
+//*_________________________________
+//! NEW STUFF ADDED ABOVE -Hitesh
+//*_________________________________
+
 
   NewTimeStep();
   return;

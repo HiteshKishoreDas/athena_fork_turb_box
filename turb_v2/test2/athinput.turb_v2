@@ -12,11 +12,11 @@ dt         = 0.003878066822509787      # time increment between outputs
 <output2>
 file_type = hdf5                                 # HDF5 data dump
 variable  = prim  # variables to be output
-dt        = 0.7756133645019574                   # time increment between outputs
+dt        = 0.007756133645019574                   # time increment between outputs
 
-<output3>
-file_type = rst                                 
-dt        = 0.7756133645019574                  # time increment between outputs
+# <output3>
+# file_type = rst                                 
+# dt        = 0.7756133645019574                  # time increment between outputs
 
 <time>
 cfl_number = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
@@ -73,11 +73,12 @@ turb_flag    = 2    # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven
 
 # User-defined variables:
 
-cooling_flag = 1
+cooling_flag = 0
+cloud_flag   = 1
 
 amb_rho      = 1.0      # Density of the ambient medium
 
-cloud_radius = 9.425575730685466e-05 # in code units
+cloud_radius = 9.425575730685466e-03 # in code units
 cloud_time   = 0.1551226729003915   # Time of insertion of cloud (in code units)
 cloud_chi    = 100    # Density contrast of the cloud
 
