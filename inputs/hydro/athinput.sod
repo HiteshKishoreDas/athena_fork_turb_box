@@ -60,13 +60,13 @@ xshock        = 0.0     # position of initial interface
 compute_error = 0       # set value to one to compute L1 error
 
 dl = 1.0                # density on left
-pl = 1.0                # pressure
+pl = 6.0                # pressure
 ul = 0.0                # X-velocity
 vl = 0.0                # Y-velocity
 wl = 0.0                # Z-velocity
 
-dr = 0.125              # density on right
-pr = 0.1                # pressure
+dr = 100.0              # density on right
+pr = 1.0                # pressure
 ur = 0.0                # X-velocity
 vr = 0.0                # Y-velocity
 wr = 0.0                # Z-velocity

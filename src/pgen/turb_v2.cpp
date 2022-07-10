@@ -228,7 +228,7 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
             // ** NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
             // ** calculation of T_new as we calculate (dt/tcool)
 
-            cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+            cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
             // ________________________________
             // FOR DEBUG PURPOSES
@@ -245,7 +245,7 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
         else{  // If T<=T_floor
 
           printf("+");
-          cons(IEN,k,j,i) += ((T_floor-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+          cons(IEN,k,j,i) += ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
         }
 
