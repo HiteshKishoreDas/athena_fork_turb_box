@@ -45,6 +45,7 @@
 //* ___________________________
 //* For Max's townsend cooling
 
+using namespace std;
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
 static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
@@ -53,14 +54,14 @@ static Real total_cooling;
 // Returns unique pointer
 // This is a function in C++13 onwards
 // The implementation here is copied from https://stackoverflow.com/a/17903225/1834164
+
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
 {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-using namespace std;
-unique_ptr<Cooling> cooler;
+std::unique_ptr<Cooling> cooler;
 
 
 //*_____________________________
@@ -183,7 +184,7 @@ void read_input (ParameterInput *pin){
 }
 
 
-void Cooling(MeshBlock *pmb, const Real time, const Real dt,
+void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
              const AthenaArray<Real> &prim, const AthenaArray<Real> &prim_scalar,
              const AthenaArray<Real> &bcc, AthenaArray<Real> &cons,
              AthenaArray<Real> &cons_scalar) {
@@ -284,7 +285,7 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
         cooling_flag_print_count = true;
     }
   
-    Cooling(pmb, time, dt,
+    townsend_cooling(pmb, time, dt,
             prim, prim_scalar,
             bcc, cons,
             cons_scalar);
@@ -331,6 +332,10 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* Enroll the Source terms
   EnrollUserExplicitSourceFunction(Source);
   
+  cooler = make_unique<Cooling>();
+  // std::unique_ptr<Cooling> cooler = std::make_unique<Cooling>();
+  // cooler = std::make_unique(Cooling);
+
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 

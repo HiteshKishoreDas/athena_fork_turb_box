@@ -4,7 +4,7 @@
 #include "../athena.hpp"
 #include "../athena_arrays.hpp"
 
-static bool DEBUG_FLAG = true;
+static bool DEBUG_FLAG = false; //true;
 
 class Cooling {
 public:
@@ -225,8 +225,11 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
     printf("Start of Cooling::townsend!\n");
   }
 
+  if (DEBUG_FLAG){
+    printf("Check that temperature is above the cooling floor\n");
+  }
   // Check that temperature is above the cooling floor
-  if (temp < tfloor) return tfloor;
+  // if (temp < tfloor) return tfloor;
 
 
   if (DEBUG_FLAG){
