@@ -195,7 +195,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real t_cloud = cloud_time;
 
-  printf("Inside cooling function stuff!\n");
+  // printf("Inside cooling function stuff!\n");
 
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
@@ -218,36 +218,36 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
                             // Defined in ../utils/townsend_cooling.hpp
 
+            //  NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
+            //  calculation of T_new as we calculate (dt/tcool)
+
+            // cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+            
             //* For Max's townsend cooling
 
+            if (temp<T_cut){
+              Real rho      = cons(IDN,k,j,i);
+              Real temp_cgs = temp;
+              Real rho_cgs  = rho * unit_density;
+              Real dt_cgs   = dt  * unit_time;
+              Real cLfac    = 1.0;
 
+              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
 
-            Real rho      = cons(IDN,k,j,i);
-            Real temp_cgs = temp;
-            Real rho_cgs  = rho  * unit_density;
-            Real dt_cgs   = dt   * unit_time;
-            Real cLfac    = 1.0;
+              cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+            }
 
-            printf("Inside cooling loop, before t_new!: %d %d %d\n", k,j,i);
-
-            Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
-             
-            printf("Inside cooling loop, after t_new!: %d %d %d\n", k,j,i);
 
             //*_____________________________
             
 
-            // ** NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
-            // ** calculation of T_new as we calculate (dt/tcool)
-
-            cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
             // ________________________________
             // FOR DEBUG PURPOSES
-            if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
+            // if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
 
-                printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
-            }
+                // printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
+            // }
             // ________________________________
 
 
