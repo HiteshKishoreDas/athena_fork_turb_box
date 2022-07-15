@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 
 
+gamma = 5/3
+
 def read_tab(fn):
 
     hdr = []
@@ -41,7 +43,7 @@ if int(N)>=0:
 
     plt.plot(prim['x1v'], prim['rho'], label = 'Density')
     plt.plot(prim['x1v'], prim['press'], label='Pressure')
-    # plt.plot(prim['x1v'], prim['press']/prim['rho'], label='Temperature')
+    plt.plot(prim['x1v'], prim['press']/prim['rho'], label='Temperature')
 
     plt.yscale('log')
     plt.legend()
@@ -49,7 +51,7 @@ if int(N)>=0:
 
 else:
 
-    for n in range(np.abs(int(N))):
+    for n in range(np.abs(int(N))+1):
 
         print(f"Reading File {n}!")
 
@@ -63,18 +65,25 @@ else:
             print("Last file reached!")
             break
 
+        cs = np.sqrt(gamma * prim['press']/prim['rho'])
         
         plt.figure()
 
-        plt.plot(prim['x1v'], prim['rho'], label = 'Density')
-        plt.plot(prim['x1v'], prim['press'], label='Pressure')
+        # plt.plot(prim['x1v'], prim['rho'], label = 'Density')
+        # plt.plot(prim['x1v'], prim['press'], label='Pressure')
         # plt.plot(prim['x1v'], prim['press']/prim['rho'], label='Temperature')
+        plt.plot(prim['x1v'], prim['vel1'], label='vel_x')
 
-        plt.ylim(5e-1, 2e3)
-    
-        plt.yscale('log')
+        # plt.ylim(-5, 5)
+        plt.ylim(-1, 1)
+
+        # plt.axhline(-1, linestyle='dashed')
+        # plt.axhline( 1, linestyle='dashed')
+
+        # plt.yscale('log')
         plt.legend()
-        plt.savefig(f'Plots/spherical_{str(n).zfill(5)}.png')
-        # plt.savefig(f'Plots/cartesian_{str(n).zfill(5)}.png')
+        # plt.savefig(f'Plots/spherical_{str(n).zfill(5)}.png')
+        # plt.savefig(f'Plots/Mach/spherical_mach_{str(n).zfill(5)}.png')
+        plt.savefig(f'Plots/vel/cartesian_vel_{str(n).zfill(5)}.png')
         
         print(f"Plotted File {n}!")
