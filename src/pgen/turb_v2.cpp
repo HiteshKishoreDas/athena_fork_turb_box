@@ -14,8 +14,10 @@
 #include <sstream>
 #include <stdexcept>
 
+#include<memory>    // std::unique_ptr
+
 //! Remove if not required
-#include <algorithm>  // max()
+#include <algorithm>     // max()
 // #include <string>     // c_str(), string
 
 // Athena++ headers
@@ -34,19 +36,34 @@
 //! Remove if not required
 // #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
 
-#include "../utils/townsend_cooling.hpp"  // T_new()
-#include "../utils/hst_func.hpp"          // All history output functions
-#include "../utils/code_units.hpp"
+// #include "../utils/townsend_cooling.hpp"  // T_new()
+#include "../utils/townsend_cooling_max.hpp" // T_new()
 
-// Cooling
-// unique_ptr<Cooling> cooler;
+#include "../utils/hst_func.hpp"             // All history output functions
+#include "../utils/code_units.hpp"           // Code units and constants
+
+//* ___________________________
+//* For Max's townsend cooling
+
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
-static Real Lambda_fac, Lambda_fac_time; // for boosting cooling
-
+static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
 static Real total_cooling;
 
+// Returns unique pointer
+// This is a function in C++13 onwards
+// The implementation here is copied from https://stackoverflow.com/a/17903225/1834164
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
+using namespace std;
+unique_ptr<Cooling> cooler;
+
+
+//*_____________________________
 
 
 #ifdef OPENMP_PARALLEL
@@ -56,25 +73,6 @@ static Real total_cooling;
 // User headers
 #include <fstream>    // for file io
 #include <iomanip>    // for std::setprecision
-
-// * Defined in townsend_cooling.hpp
-//TODO: Maybe move the units to another file from townsend_cooling.hpp
-/*
-static const Real CONST_pc  = 3.086e18;
-static const Real CONST_yr  = 3.154e7;
-static const Real CONST_amu = 1.66053886e-24;
-static const Real CONST_kB  = 1.3806505e-16;
-
-static const Real unit_length = CONST_pc*1e3; // 1 kpc
-static const Real unit_time   = CONST_yr*1e6; // 1 Myr
-static const Real unit_density = CONST_amu;   // 1 mp/cm-3
-
-static const Real unit_velocity = unit_length/unit_time; // in kpc/Myr
-
-static const Real unit_q = (unit_density * pow(unit_velocity,3.0))/unit_length;
-
-static const Real KELVIN = unit_velocity*unit_velocity*CONST_amu/CONST_kB;
-*/
 
 
 // Variable read from the input file
@@ -196,34 +194,47 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real t_cloud = cloud_time;
 
+  printf("Inside cooling function stuff!\n");
 
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
 
-        Real temp = (prim(IPR,k,j,i) / prim(IDN,k,j,i)) * KELVIN * mu ;
+        Real temp = (prim(IPR,k,j,i) / cons(IDN,k,j,i)) * KELVIN * mu ;
 
         if (temp > T_floor) {
 
-            Real *lam_para = Lam_file_read(temp);
+            //* For own townsend cooling
+
+            // Real *lam_para = Lam_file_read(temp);
 
             //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
 
-            auto rho = cons(IDN,k,j,i);
-
-            // auto temp_cgs = temp * unit_temp;
-            // auto rho_cgs  = rho  * unit_density;
-            // auto dt_cgs   = dt   * unit_time;
-            // auto cLfac = 1.0;
-
-            // Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
-
-            Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
-                                    prim(IDN,k,j,i), dt, 
-                                    mu, mue, muH, 
-                                    g, T_floor, T_ceil, T_cut);
+            // Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
+            //                         prim(IDN,k,j,i), dt, 
+            //                         mu, mue, muH, 
+            //                         g, T_floor, T_ceil, T_cut);
 
                             // Defined in ../utils/townsend_cooling.hpp
+
+            //* For Max's townsend cooling
+
+
+            printf("Inside cooling loop stuff before temp_new!: %d %d %d\n", k,j,i);
+
+            Real rho      = cons(IDN,k,j,i);
+            Real temp_cgs = temp;
+            Real rho_cgs  = rho  * unit_density;
+            Real dt_cgs   = dt   * unit_time;
+            Real cLfac    = 1.0;
+
+            Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+
+             
+            printf("Inside cooling loop stuff!: %d %d %d\n", k,j,i);
+
+            //*_____________________________
+            
 
             // ** NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
             // ** calculation of T_new as we calculate (dt/tcool)
@@ -432,15 +443,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   return;
 
 }
-
-// Returns unique pointer
-// This is a function in C++13 onwards
-// The implementation here is copied from https://stackoverflow.com/a/17903225/1834164
-// template<typename T, typename... Args>
-// std::unique_ptr<T> make_unique(Args&&... args)
-// {
-  // return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-// }
 
 //========================================================================================
 //! \fn void Mesh::UserWorkAfterLoop(ParameterInput *pin)

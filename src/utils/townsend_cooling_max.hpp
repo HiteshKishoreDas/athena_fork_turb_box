@@ -11,9 +11,9 @@ public:
 
   Real tfloor;
 
-  auto townsend(Real temp, Real rho, Real const dt, Real Lambda_fac = 1.0) -> Real;
-  auto Lambda(Real temp) -> Real;
-  auto tcool(Real temp, Real rho) -> Real;
+  Real townsend(Real temp, Real rho, Real const dt, Real Lambda_fac = 1.0);
+  Real Lambda(Real temp);
+  Real tcool(Real temp, Real rho);
 
 private:
   Real const mh  = 1.6605e-24;   // atomic mass unit (g)
@@ -31,11 +31,11 @@ private:
 // Initialize all values in the cooling table
 Cooling::Cooling() {
   // Compute the constant factor needed to compute new TEFs
-  auto g  = 5.0/3.0; // adiabatic index
-  auto X = 0.7; auto Z = 0.02; // Fully ionized, solar abundances
-  auto mu   = 1.0/(2.0*X + 0.75*(1.0-X-Z) + Z/2.0);
-  auto mu_e = 2.0/(1.0+X);
-  auto mu_h = 1.0/X;
+  Real g  = 5.0/3.0; // adiabatic index
+  Real X = 0.7; auto Z = 0.02; // Fully ionized, solar abundances
+  Real mu   = 1.0/(2.0*X + 0.75*(1.0-X-Z) + Z/2.0);
+  Real mu_e = 2.0/(1.0+X);
+  Real mu_h = 1.0/X;
   const_factor = (1.0e-23)*(g-1.0)*mu/(kb*mu_e*mu_h*mh);
 
   // Initialize the cooling table
@@ -175,16 +175,16 @@ Cooling::Cooling() {
   // Calculate All TEFs Y_k recursively (Eq. A6)
   cool_tef(nbins-1) = 0.0; // Last Y_N = 0
   for (int i=nbins-2; i>=0; i--) {
-    auto t_n    = cool_t(nbins-1);
-    auto coef_n = cool_coef(nbins-1);
+    Real t_n    = cool_t(nbins-1);
+    Real coef_n = cool_coef(nbins-1);
 
-    auto t_i   = cool_t(i);
-    auto tef_i = cool_tef(i);
-    auto coef  = cool_coef(i);
-    auto slope = cool_index(i);
+    Real t_i   = cool_t(i);
+    Real tef_i = cool_tef(i);
+    Real coef  = cool_coef(i);
+    Real slope = cool_index(i);
 
-    auto sm1  = slope - 1.0;
-    auto step = (coef_n/coef)*(t_i/t_n)*(std::pow(t_i/cool_t(i+1),sm1)-1)/sm1;
+    Real sm1  = slope - 1.0;
+    Real step = (coef_n/coef)*(t_i/t_n)*(std::pow(t_i/cool_t(i+1),sm1)-1)/sm1;
     cool_tef(i) = cool_tef(i+1) - step;
   }
 
@@ -205,31 +205,31 @@ Cooling::~Cooling() {
 //           - T < t_ceil and T > t_floor
 //           - All cooling slopes are not equal to 1
 //           - `Lambda_fac` can be used to increase (>1) or decrease (<1) cooling.
-auto Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac) -> Real
+Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
 {
   // Check that temperature is above the cooling floor
   if (temp < tfloor) return tfloor;
 
   // Get Reference values from the last bin
-  auto t_n    = cool_t(nbins-1);
-  auto coef_n = cool_coef(nbins-1) * Lambda_fac;
+  Real t_n    = cool_t(nbins-1);
+  Real coef_n = cool_coef(nbins-1) * Lambda_fac;
 
   // Get the index of the right temperature bin
-  auto idx = 0;
+  int idx = 0;
   while ((idx < nbins-2) && (cool_t(idx+1) < temp)) { idx += 1; }
 
   // Look up the corresponding slope and coefficient
-  auto t_i   = cool_t(idx);
-  auto tef_i = cool_tef(idx);
-  auto coef  = cool_coef(idx) * Lambda_fac;
-  auto slope = cool_index(idx);
+  Real t_i   = cool_t(idx);
+  Real tef_i = cool_tef(idx);
+  Real coef  = cool_coef(idx) * Lambda_fac;
+  Real slope = cool_index(idx);
 
   // Compute the Temporal Evolution Function Y(T) (Eq. A5)
-  auto sm1 = slope - 1.0;
-  auto tef = tef_i + (coef_n/coef)*(t_i/t_n)*(std::pow(t_i/temp,sm1)-1)/sm1;
+  Real sm1 = slope - 1.0;
+  Real tef = tef_i + (coef_n/coef)*(t_i/t_n)*(std::pow(t_i/temp,sm1)-1)/sm1;
 
   // Compute the adjusted TEF for new timestep (Eqn. 26)
-  auto tef_adj = tef + rho*coef_n*const_factor*dt/t_n;
+  Real tef_adj = tef + rho*coef_n*const_factor*dt/t_n;
 
   // TEF is a strictly decreasing function and new_tef > tef
   // Check if the new TEF falls into a lower bin
@@ -243,8 +243,8 @@ auto Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac) -> R
   }
 
   // Compute the Inverse Temporal Evolution Function Y^{-1}(Y) (Eq. A7)
-  auto oms  = 1.0 - slope;
-  auto tnew = t_i*std::pow(1-oms*(coef/coef_n)*(t_n/t_i)*(tef_adj-tef_i),1/oms);
+  Real oms  = 1.0 - slope;
+  Real tnew = t_i*std::pow(1-oms*(coef/coef_n)*(t_n/t_i)*(tef_adj-tef_i),1/oms);
 
   // Return the new temperature if it is still above the temperature floor
   //return std::max(tnew,tfloor);
@@ -255,20 +255,20 @@ auto Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac) -> R
 // Lambda(T)
 // Returns: Lambda(T) in [1e-2e ergs*cm3/s], nan if T oob
 // Requires: - Input temperature in K
-auto Cooling::Lambda(Real temp) -> Real
+Real Cooling::Lambda(Real temp)
 {
   // Check that temperature is not oob
   if((temp < cool_t(0)) || (temp > cool_t(nbins - 1)))
      return NAN;
      
   // Get the index of the right temperature bin
-  auto idx = 0;
+  int idx = 0;
   while ((idx < nbins-2) && (cool_t(idx+1) < temp)) { idx += 1; }
 
   // Look up the corresponding slope and coefficient
-  auto t_i   = cool_t(idx);
-  auto coef  = cool_coef(idx);
-  auto slope = cool_index(idx);
+  Real t_i   = cool_t(idx);
+  Real coef  = cool_coef(idx);
+  Real slope = cool_index(idx);
 
   return coef * pow(temp / t_i, slope);
 }
@@ -278,13 +278,13 @@ auto Cooling::Lambda(Real temp) -> Real
 // Returns: tcool [s], nan if T oob
 // Requires: - Input temperature in K
 //           - Input density in g
-auto Cooling::tcool(Real temp, Real rho) -> Real
+Real Cooling::tcool(Real temp, Real rho)
 {
   // Check that temperature is not oob
   if((temp < cool_t(0)) || (temp > cool_t(nbins - 1)))
      return NAN;
 
-  auto L = Cooling::Lambda(temp);
+  Real L = Cooling::Lambda(temp);
 
   return temp / (const_factor * rho * L);
 }

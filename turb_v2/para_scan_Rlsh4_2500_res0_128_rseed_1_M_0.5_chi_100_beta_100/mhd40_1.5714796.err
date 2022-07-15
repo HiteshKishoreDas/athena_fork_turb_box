@@ -1,0 +1,6 @@
+Currently Loaded Modulefiles:
+  1) intel/19.1.2      3) fftw-mpi/3.3.8
+  2) impi/2019.8       4) hdf5-mpi/1.8.21
+srun: error: co2119: tasks 0-31: Segmentation fault
+srun: launch/slurm: _step_signal: Terminating StepId=5714796.0
+srun: error: co2120: tasks 32-63: Segmentation fault
