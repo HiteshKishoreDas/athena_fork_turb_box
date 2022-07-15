@@ -339,7 +339,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(8);
+    AllocateUserHistoryOutput(9);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -349,13 +349,16 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(5, Bx_sum, "Bx_sum");
     EnrollUserHistoryOutput(6, By_sum, "By_sum");
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
+    EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
+
   }
   else {
-    AllocateUserHistoryOutput(3);
+    AllocateUserHistoryOutput(4);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
+    EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
   }
 
   

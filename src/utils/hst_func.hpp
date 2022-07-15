@@ -18,6 +18,31 @@
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
 
+Real cold_gas(MeshBlock *pmb, int iout){
+
+  Real cold_gas_mass=0;
+
+  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
+  
+  for(int k=ks; k<=ke; k++) {
+    for(int j=js; j<=je; j++) {
+      for(int i=is; i<=ie; i++) {
+        
+        Real rho = pmb->phydro->u(IDN,k,j,i);
+        Real prs = pmb->phydro->w(IPR,k,j,i);
+
+        Real temp = (prs / rho) * KELVIN * mu ;
+
+        if (temp <= T_cold){
+          cold_gas_mass += rho*pmb->pcoord->GetCellVolume(k,j,i);
+        }
+
+      }
+    }
+  }
+
+  return cold_gas_mass;
+}
 
 Real rho_sum(MeshBlock *pmb, int iout){
 
