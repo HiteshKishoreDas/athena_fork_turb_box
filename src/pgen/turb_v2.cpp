@@ -220,7 +220,6 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
             //* For Max's townsend cooling
 
 
-            printf("Inside cooling loop stuff before temp_new!: %d %d %d\n", k,j,i);
 
             Real rho      = cons(IDN,k,j,i);
             Real temp_cgs = temp;
@@ -228,10 +227,11 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
             Real dt_cgs   = dt   * unit_time;
             Real cLfac    = 1.0;
 
-            Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+            printf("Inside cooling loop, before t_new!: %d %d %d\n", k,j,i);
 
+            Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
              
-            printf("Inside cooling loop stuff!: %d %d %d\n", k,j,i);
+            printf("Inside cooling loop, after t_new!: %d %d %d\n", k,j,i);
 
             //*_____________________________
             

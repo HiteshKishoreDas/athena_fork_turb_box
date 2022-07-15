@@ -4,6 +4,8 @@
 #include "../athena.hpp"
 #include "../athena_arrays.hpp"
 
+static bool DEBUG_FLAG = true;
+
 class Cooling {
 public:
   Cooling();
@@ -30,6 +32,11 @@ private:
 
 // Initialize all values in the cooling table
 Cooling::Cooling() {
+
+  if (DEBUG_FLAG){
+    printf("Start of Cooling::Cooling!\n");
+  }
+
   // Compute the constant factor needed to compute new TEFs
   Real g  = 5.0/3.0; // adiabatic index
   Real X = 0.7; auto Z = 0.02; // Fully ionized, solar abundances
@@ -190,6 +197,12 @@ Cooling::Cooling() {
 
   // Set temperature floor
   tfloor = cool_t(0);
+
+
+  if (DEBUG_FLAG){
+    printf("End of Cooling::Cooling!\n");
+  }
+
 }
 
 Cooling::~Cooling() {
@@ -207,30 +220,54 @@ Cooling::~Cooling() {
 //           - `Lambda_fac` can be used to increase (>1) or decrease (<1) cooling.
 Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
 {
+
+  if (DEBUG_FLAG){
+    printf("Start of Cooling::townsend!\n");
+  }
+
   // Check that temperature is above the cooling floor
   if (temp < tfloor) return tfloor;
 
+
+  if (DEBUG_FLAG){
+    printf("Get Reference values from the last bin\n");
+  }
   // Get Reference values from the last bin
   Real t_n    = cool_t(nbins-1);
   Real coef_n = cool_coef(nbins-1) * Lambda_fac;
 
+  if (DEBUG_FLAG){
+    printf("Get the index of the right temperature bin\n");
+  }
   // Get the index of the right temperature bin
   int idx = 0;
   while ((idx < nbins-2) && (cool_t(idx+1) < temp)) { idx += 1; }
 
+  if (DEBUG_FLAG){
+    printf("Look up the corresponding slope and coefficient\n");
+  }
   // Look up the corresponding slope and coefficient
   Real t_i   = cool_t(idx);
   Real tef_i = cool_tef(idx);
   Real coef  = cool_coef(idx) * Lambda_fac;
   Real slope = cool_index(idx);
 
+  if (DEBUG_FLAG){
+    printf("Compute the Temporal Evolution Function Y(T) (Eq. A5)\n");
+  }
   // Compute the Temporal Evolution Function Y(T) (Eq. A5)
   Real sm1 = slope - 1.0;
   Real tef = tef_i + (coef_n/coef)*(t_i/t_n)*(std::pow(t_i/temp,sm1)-1)/sm1;
 
+  if (DEBUG_FLAG){
+    printf("Compute the adjusted TEF for new timestep (Eqn. 26)\n");
+  }
   // Compute the adjusted TEF for new timestep (Eqn. 26)
   Real tef_adj = tef + rho*coef_n*const_factor*dt/t_n;
 
+  if (DEBUG_FLAG){
+    printf("TEF is a strictly decreasing function and new_tef > tef\n");
+  }
   // TEF is a strictly decreasing function and new_tef > tef
   // Check if the new TEF falls into a lower bin
   // If so, update slopes and coefficients
@@ -242,10 +279,16 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
     slope = cool_index(idx);
   }
 
+  if (DEBUG_FLAG){
+    printf("Compute the Inverse Temporal Evolution Function Y^{-1}(Y) (Eq. A7)\n");
+  }
   // Compute the Inverse Temporal Evolution Function Y^{-1}(Y) (Eq. A7)
   Real oms  = 1.0 - slope;
   Real tnew = t_i*std::pow(1-oms*(coef/coef_n)*(t_n/t_i)*(tef_adj-tef_i),1/oms);
 
+  if (DEBUG_FLAG){
+    printf("End of Cooling::townsend!\n");
+  }
   // Return the new temperature if it is still above the temperature floor
   //return std::max(tnew,tfloor);
   return tnew;
@@ -257,6 +300,11 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
 // Requires: - Input temperature in K
 Real Cooling::Lambda(Real temp)
 {
+
+  if (DEBUG_FLAG){
+    printf("Start of Cooling::Lambda!\n");
+  }
+
   // Check that temperature is not oob
   if((temp < cool_t(0)) || (temp > cool_t(nbins - 1)))
      return NAN;
@@ -270,6 +318,10 @@ Real Cooling::Lambda(Real temp)
   Real coef  = cool_coef(idx);
   Real slope = cool_index(idx);
 
+  if (DEBUG_FLAG){
+    printf("End of Cooling::Lambda!\n");
+  }
+
   return coef * pow(temp / t_i, slope);
 }
 
@@ -280,11 +332,18 @@ Real Cooling::Lambda(Real temp)
 //           - Input density in g
 Real Cooling::tcool(Real temp, Real rho)
 {
+  if (DEBUG_FLAG){
+    printf("Start of Cooling::tcool!\n");
+  }
   // Check that temperature is not oob
   if((temp < cool_t(0)) || (temp > cool_t(nbins - 1)))
      return NAN;
 
   Real L = Cooling::Lambda(temp);
+
+  if (DEBUG_FLAG){
+    printf("End of Cooling::tcool!\n");
+  }
 
   return temp / (const_factor * rho * L);
 }
