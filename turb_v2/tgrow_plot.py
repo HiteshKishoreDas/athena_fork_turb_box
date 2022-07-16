@@ -32,7 +32,7 @@ t_eddy = ps.L_box/v_turb_predict
 plt.figure()
 
 for i_MHD, MHD_flag in enumerate(MHD):
-    for i in range(4,len(ps.R_lsh)):
+    for i in range(3,len(ps.R_lsh)):
 
         fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=0.5,cloud_chi=100,beta=100,MHD_flag=MHD_flag)
 
@@ -75,7 +75,7 @@ for i_MHD, MHD_flag in enumerate(MHD):
             ,linewidth=5,zorder=-2)
 
             plt.axhline(tg.tgrow(100, M, ps.R_lsh[i], 40, ps.t_cool_cloud),\
-                linestyle='dotted',color='k',linewidth=3,label=r'Theoretical t$_{\rm grow}$')
+                linestyle='dotted',color=line_col[i],linewidth=3,label=r'Theoretical t$_{\rm grow}$')
 
 plt.yscale('log')
 plt.legend(loc='lower right')

@@ -11,7 +11,7 @@ import athena_read as ar
 from globals import *
 
 
-def add_legend(plot_args_lst, legend_loc = 'best', default_plot_args = {'color' : 'black'},
+def add_legend(plot_args_lst, legend_loc = 'lower left', default_plot_args = {'color' : 'black'},
                **kwargs):
     """Adds another legend to plot.
 
@@ -42,7 +42,7 @@ def add_legend(plot_args_lst, legend_loc = 'best', default_plot_args = {'color' 
     if 'loc' not in o:
         o['loc'] = legend_loc
     if legend_loc == 'above':
-        o['loc'] = 'lower center'
+        o['loc'] = 'lower left'
         o['bbox_to_anchor'] = (0.5, 1.01)
 
     plt.legend(handles = linelst, **o)
@@ -65,7 +65,7 @@ cb_qnt = np.copy(ps.R_lsh)
 line_col = cmap(cb_qnt/cb_qnt.max())
 
 
-M = 0.5
+M = 0.25
 v_turb_predict = M*vt.cs_calc(ps.T_hot_req,ps.mu)
 t_eddy = ps.L_box/v_turb_predict
 
@@ -73,18 +73,23 @@ plt.figure()
 
 for i_MHD, MHD_flag in enumerate(MHD):
     for i in range(len(ps.R_lsh)):
+    # for i in range(1,len(ps.R_lsh)-1):
 
-        fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=0.5,cloud_chi=100,beta=100,MHD_flag=MHD_flag)
+        fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=M,cloud_chi=100,beta=100,MHD_flag=MHD_flag)
 
-        save_arr = np.loadtxt(f"save_arr/save_arr{fn_suffix}")
+        try:
+            save_arr = np.loadtxt(f"save_arr/save_arr{fn_suffix}")
+        except:
+            continue
 
         time     = save_arr[0,:]
         cold_gas = save_arr[1,:]
 
         x_data = time/t_eddy[i]
-        y_data = cold_gas/cold_gas[0]
+        y_data = cold_gas #/cold_gas[0]
 
         y_cut = 1e-4
+
         if cold_gas.min() <= y_cut:
             x_data -= x_data[0]
             y_data = sg.savgol_filter(y_data, window_length=11, polyorder=3)
@@ -112,11 +117,11 @@ for i_MHD, MHD_flag in enumerate(MHD):
             ,linewidth=5,zorder=-2)
 
 
-plt.yscale('log')
-plt.legend(loc='lower right')
+# plt.yscale('log')
+plt.legend(loc='upper left')
 
-plt.xlim(0,3)
-plt.ylim(1e-3,2e2)
+# plt.xlim(0,3)
+# plt.ylim(1e-1,4e2)
 
 plt.xlabel(r't/t$_{\rm eddy}$')
 plt.ylabel(r'M$_{\rm cold}$/M$_{\rm cold,initial}$')

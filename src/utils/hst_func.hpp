@@ -18,6 +18,8 @@
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
 
+#include "code_units.hpp"
+
 Real cold_gas(MeshBlock *pmb, int iout){
 
   Real cold_gas_mass=0;

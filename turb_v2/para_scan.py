@@ -53,7 +53,7 @@ muH = 1.0/X
 mH  = 1.0
 
 # R_lsh = np.array([2500])
-R_lsh = np.array([100,250,500,1000,2500])
+R_lsh = np.array([100,250,500,1000,2500, 50, 10, 5, 2, 1])
 # R_lsh = np.array([50,100,750,1000,2500,5000])
 
 t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z)
@@ -79,9 +79,9 @@ cloud_flag   = 1  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 1  # 1 for adding magnetic fields
+B_flag       = 0  # 1 for adding magnetic fields
 
-M = 0.5     # Required Mach number
+M = 0.25     # Required Mach number
 
 if B_flag:
 

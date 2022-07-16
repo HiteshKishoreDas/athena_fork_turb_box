@@ -6,8 +6,8 @@ import create_input as ci
 import create_job_script as cj
 
 
-# for i in range(np.size(R_lsh)): # np.size(nx1)):
-for i in range(1, np.size(R_lsh)-1): # np.size(nx1)):
+# for i in range(np.size(R_lsh)):
+for i in range(5, np.size(R_lsh)):
     for j in range(np.size(nx1)):
 
         ## os.system('source ../load_module')
@@ -19,6 +19,8 @@ for i in range(1, np.size(R_lsh)-1): # np.size(nx1)):
         os.system(f'rm para_scan'+filename_cloud_add(i,j)+'/job_script_cloud_template.sh')
         os.system(f'rm para_scan'+filename_cloud_add(i,j)+'/athinput.turb_v2_cloud_template')
         
+        os.system(f'cp Turbulence/para_scan{filename_turb_add(i,j)}/Turb.hst para_scan{filename_cloud_add(i,j)}/') 
+
         print(f"\n\n{filename_cloud_add(i,j)}: Directory created...")
         ci.input_cloud_new(i,j)
         print("Input file created....")

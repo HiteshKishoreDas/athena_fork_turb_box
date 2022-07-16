@@ -5,37 +5,43 @@ import para_scan as ps
 import athena_read as ar
 from globals import *
 
-for i in range(len(ps.R_lsh)):
+MHD_list = [True, False]
 
-    fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=0.5,cloud_chi=100,beta=100,MHD_flag=False)
+M = 0.25
 
-    cold_gas = []
-    time = []
+for mhd in MHD_list:
+    # for i in range(len(ps.R_lsh)):
+    for i in range(5,len(ps.R_lsh)): 
 
-    print(fn_suffix)
+        fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=M,cloud_chi=100,beta=100,MHD_flag=mhd)
 
-    for N in range(501,566):
+        cold_gas = []
+        time = []
 
-        print(f'Snapshot: {N}')
+        print(fn_suffix)
 
-        fn = f"para_scan{fn_suffix}/Turb.out2.00{N}.athdf"
+        for N in range(501,566):
 
-        # print(fn)
+            print(f'Snapshot: {N}')
 
-        try:
-            data = ar.athdf(fn)
-        except:
-            print("Last snapshot!")
-            break
+            fn = f"para_scan{fn_suffix}/Turb.out2.00{N}.athdf"
+
+            # print(fn)
+
+            try:
+                data = ar.athdf(fn)
+            except:
+                print("Last snapshot!")
+                break
 
 
-        T = (data['press']/data['rho'])*KELVIN*mu
+            T = (data['press']/data['rho'])*KELVIN*mu
 
-        cold_gas.append(np.sum(data['rho'][T<1.5*ps.T_cold]))
-        time.append(data['Time'])
+            cold_gas.append(np.sum(data['rho'][T<ps.T_cold]))
+            time.append(data['Time'])
 
-    save_arr = []
-    save_arr.append(time)
-    save_arr.append(cold_gas)
+        save_arr = []
+        save_arr.append(time)
+        save_arr.append(cold_gas)
 
-    np.savetxt(f"save_arr/save_arr{fn_suffix}", np.array(save_arr))
+        np.savetxt(f"save_arr/save_arr{fn_suffix}", np.array(save_arr))

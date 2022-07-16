@@ -31,4 +31,26 @@ static const Real unit_q = (unit_density * pow(unit_velocity,3.0))/unit_length;
 
 static const Real KELVIN = unit_velocity*unit_velocity*CONST_amu/CONST_kB;
 
+// in terms of solar abundances
+static Real Zsol = 1.0;
+static Real Xsol = 1.0;
+
+static Real X = Xsol * 0.7381;
+static Real Z = Zsol * 0.0134;
+static Real Y = 1 - X - Z;
+
+static Real mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
+static Real mue = 2.0/(1.0+X);
+static Real muH = 1.0/X;
+
+// Relevant temperatures
+static Real T_floor   = 1e4;   // in K
+static Real T_ceil    = 1e8;   // in K
+static Real T_hot     = 1e7;
+static Real T_hot_req = 1e7;
+static Real T_cold    = 2*1e4;
+static Real T_cut_mul = 0.6;
+static Real T_cut     = T_cut_mul*T_hot_req;
+
+
 #endif

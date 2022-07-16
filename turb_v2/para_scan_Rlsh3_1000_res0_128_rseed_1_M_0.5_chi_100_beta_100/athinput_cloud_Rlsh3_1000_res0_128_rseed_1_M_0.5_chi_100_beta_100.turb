@@ -99,4 +99,4 @@ cloud_pos_z  = 0.0       # Cloud center z-coordinate
 
 B_x          = 0.0  # Magnetic field in x-direction
 B_y          = 0.0  # Magnetic field in y-direction
-B_z          = 0.03727718543941034  # Magnetic field in z-direction
+B_z          = 0.03405587639419029  # Magnetic field in z-direction
