@@ -32,7 +32,7 @@ t_eddy = ps.L_box/v_turb_predict
 plt.figure()
 
 for i_MHD, MHD_flag in enumerate(MHD):
-    for i in range(3,len(ps.R_lsh)):
+    for i in [4]:#range(3,len(ps.R_lsh)):
 
         fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=0.5,cloud_chi=100,beta=100,MHD_flag=MHD_flag)
 
@@ -78,10 +78,10 @@ for i_MHD, MHD_flag in enumerate(MHD):
                 linestyle='dotted',color=line_col[i],linewidth=3,label=r'Theoretical t$_{\rm grow}$')
 
 plt.yscale('log')
-plt.legend(loc='lower right')
+plt.legend(loc='upper center')
 
 # plt.xlim(0,3)
-# plt.ylim(1e-3,2e2)
+plt.ylim(1e-1,3e0)
 
 plt.xlabel(r't/t$_{\rm eddy}$')
 plt.ylabel(r't$_{\rm grow}$ = $\frac{m_{\rm cold}}{\dot{m}_{\rm cold}}$')

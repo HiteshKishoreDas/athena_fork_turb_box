@@ -1767,11 +1767,6 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
               // Inside the cloud region
               if(dist <= cloud_r*cloud_r){
 
-                Real temp = (pmb->phydro->w(IPR,k,j,i)/pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu;
-
-                Real chi_lim = std::min(cloud_chi,temp/T_floor);
-
-                Real rho_temp = pmb->phydro->u(IDN,k,j,i);
 
                 //Initial energy ______________________________________//
 
@@ -1792,6 +1787,15 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
                 Real IE_in = TE_in - KE_in - BE_in;
 
                 //_______________________________________________________//
+
+                // Real temp = (pmb->phydro->w(IPR,k,j,i)/pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu; //! CHANGE TO CALCULATING FROM IEN
+                Real rho_temp = pmb->phydro->u(IDN,k,j,i);
+
+                Real temp = IE_in * (g-1.0)/rho_temp; ;
+
+                Real chi_lim = std::min(cloud_chi,temp/T_floor);
+                printf("chi_lim: %lf\n", chi_lim);
+
 
                 pmb->phydro->u(IDN,k,j,i) *= chi_lim;//*2.0;
 

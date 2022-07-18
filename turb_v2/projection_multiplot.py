@@ -7,24 +7,31 @@ import yt
 
 import para_scan as ps
 from globals import *
+import v_turb as vt
 
+
+M = 0.25
+v_turb_predict = M*vt.cs_calc(ps.T_hot_req,ps.mu)
+t_eddy = ps.L_box/v_turb_predict
 
 fig = plt.figure()
 
-N_list = [501,502,530]
+N_list = [501,510,565]
+
+R_lsh = ["5","50"]
 
 def filename(N):
     file_name = f"para_scan{ps.filename_cloud_add(2,0)}/Turb.out2.00{N}.athdf"
 
     return file_name
 
-fn1a = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_hydro/Turb.out2.00501.athdf"
-fn2a = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_hydro/Turb.out2.00510.athdf"
-fn3a = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_hydro/Turb.out2.00565.athdf"
+fn1a = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_hydro/Turb.out2.{str(N_list[0]).zfill(5)}.athdf"
+fn2a = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_hydro/Turb.out2.{str(N_list[1]).zfill(5)}.athdf"
+fn3a = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_hydro/Turb.out2.{str(N_list[2]).zfill(5)}.athdf"
 
-fn1b = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_beta_100/Turb.out2.00501.athdf"
-fn2b = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_beta_100/Turb.out2.00510.athdf"
-fn3b = "para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_beta_100/Turb.out2.00565.athdf"
+fn1b = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_beta_100/Turb.out2.{str(N_list[0]).zfill(5)}.athdf"
+fn2b = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_beta_100/Turb.out2.{str(N_list[1]).zfill(5)}.athdf"
+fn3b = f"para_scan_Rlsh{R_lsh[0]}_{R_lsh[1]}_res0_128_rseed_1_M_{M}_chi_100_beta_100/Turb.out2.{str(N_list[2]).zfill(5)}.athdf"
 
 
 fns = [fn1a, fn2a, fn3a, fn1b, fn2b, fn3b]
@@ -48,14 +55,18 @@ units_override = {
     "mass_unit": (2.454e7, "Msun"),
 }
 
+current_time = []
+
 for i, fn in enumerate(fns):
     # Load the data and create a single plot
-    ds = yt.load(fn, units_override=units_override)  # load data
+    ds = yt.load(fn)#, units_override=units_override)  # load data
     p = yt.ProjectionPlot(ds, "z", ("gas", "density"))#, weight_field="density")
 
+    current_time.append(float(ds.current_time))
+
     # Ensure the colorbar limits match for all plots
-    # p.set_zlim(("gas", "density"), 1e0, 1e1)
-    p.set_zlim(("gas", "density"), 2e-3, 1e-2)
+    # p.set_zlim(("gas", "density"), 5e-2, 5e-1)
+    # p.set_zlim(("gas", "density"), 2e-3, 1e-2)
 
     # This forces the ProjectionPlot to redraw itself on the AxesGrid axes.
     plot = p.plots[("gas", "density")]

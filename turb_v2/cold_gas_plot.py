@@ -86,7 +86,7 @@ for i_MHD, MHD_flag in enumerate(MHD):
         cold_gas = save_arr[1,:]
 
         x_data = time/t_eddy[i]
-        y_data = cold_gas #/cold_gas[0]
+        y_data = cold_gas/cold_gas[0]
 
         y_cut = 1e-4
 
@@ -117,11 +117,12 @@ for i_MHD, MHD_flag in enumerate(MHD):
             ,linewidth=5,zorder=-2)
 
 
-# plt.yscale('log')
+plt.yscale('log')
 plt.legend(loc='upper left')
 
-# plt.xlim(0,3)
+plt.xlim(0,1)
 # plt.ylim(1e-1,4e2)
+plt.ylim(4e-1,1e1)
 
 plt.xlabel(r't/t$_{\rm eddy}$')
 plt.ylabel(r'M$_{\rm cold}$/M$_{\rm cold,initial}$')
