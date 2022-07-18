@@ -1791,7 +1791,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
                 // Real temp = (pmb->phydro->w(IPR,k,j,i)/pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu; //! CHANGE TO CALCULATING FROM IEN
                 Real rho_temp = pmb->phydro->u(IDN,k,j,i);
 
-                Real temp = IE_in * (g-1.0)/rho_temp; ;
+                Real temp = (IE_in * (g-1.0)/rho_temp) * KELVIN * mu ;
 
                 Real chi_lim = std::min(cloud_chi,temp/T_floor);
                 printf("chi_lim: %lf\n", chi_lim);
