@@ -240,8 +240,6 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 }
 
 
-static int cooling_flag_print_count = 0;
-
 Real hst_total_cooling(MeshBlock *pmb, int iout) {
   if(pmb->lid == 0)
     return total_cooling;
