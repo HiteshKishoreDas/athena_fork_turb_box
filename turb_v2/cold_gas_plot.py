@@ -59,31 +59,33 @@ cmap_name = 'Paired'
 cmap = mt.cm.get_cmap(cmap_name)
 
 # cb_qnt = np.scopy(ps.dedt)
-cb_qnt = np.copy(ps.R_lsh)
+cb_qnt = np.copy(np.log10(ps.R_lsh))
 
 # line_col = cmap(np.log10(beta_list)/np.log10(beta_list).max())
 line_col = cmap(cb_qnt/cb_qnt.max())
 
+res = 128
 
-M = 0.25
+M = 0.9
 v_turb_predict = M*vt.cs_calc(ps.T_hot_req,ps.mu)
 t_eddy = ps.L_box/v_turb_predict
 
-plt.figure()
+fig1, ax1 = plt.subplots(1,1,figsize=(10,10))
 
 for i_MHD, MHD_flag in enumerate(MHD):
     for i in range(len(ps.R_lsh)):
+    # for i in [9,8,7,6,5,1,2,3]:#range(len(ps.R_lsh)):
+    # for i in [4]:#range(len(ps.R_lsh)):
     # for i in range(1,len(ps.R_lsh)-1):
 
         fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=M,cloud_chi=100,beta=100,MHD_flag=MHD_flag)
 
         try:
             save_arr = np.loadtxt(f"save_arr/save_arr{fn_suffix}")
+            time     = save_arr[0,:]
+            cold_gas = save_arr[1,:]
         except:
             continue
-
-        time     = save_arr[0,:]
-        cold_gas = save_arr[1,:]
 
         x_data = time/t_eddy[i]
         y_data = cold_gas/cold_gas[0]
@@ -105,29 +107,33 @@ for i_MHD, MHD_flag in enumerate(MHD):
             y_data = sg.savgol_filter(y_data, window_length=11, polyorder=3)
 
         if MHD_flag:
-            plt.plot(x_data,y_data, color=line_col[i], linestyle=linestyle_list[i_MHD]\
+            ax1.plot(x_data,y_data, color=line_col[i], linestyle=linestyle_list[i_MHD]\
             ,linewidth=4, label=r'R/l$_{\rm shatter} = $'+ f'{ps.R_lsh[i]}')
         else:
-            plt.plot(x_data,y_data, color=line_col[i], linestyle=linestyle_list[i_MHD]\
+            ax1.plot(x_data,y_data, color=line_col[i], linestyle=linestyle_list[i_MHD]\
             ,linewidth=4)
 
 
         if MHD_flag:
-            plt.plot(x_data,y_data, color='k', linestyle=linestyle_list[i_MHD]\
+            ax1.plot(x_data,y_data, color='k', linestyle=linestyle_list[i_MHD]\
             ,linewidth=5,zorder=-2)
 
 
-plt.yscale('log')
-plt.legend(loc='upper left')
+ax1.set_yscale('log')
+ax1.legend(loc='upper left')
 
-plt.xlim(0,1)
+# plt.xlim(0,1)
 # plt.ylim(1e-1,4e2)
-plt.ylim(4e-1,1e1)
+ax1.set_ylim(4e-1,25)
+# ax1.set_xlim(-0.25,1.75)
 
-plt.xlabel(r't/t$_{\rm eddy}$')
-plt.ylabel(r'M$_{\rm cold}$/M$_{\rm cold,initial}$')
+ax1.set_xlabel(r't/t$_{\rm eddy}$')
+ax1.set_ylabel(r'M$_{\rm cold}$/M$_{\rm cold,initial}$')
 
-
+ax1.set_title(r"$\mathcal{M} = $"+f"{M}, Resolution: {res}"+ r"$^{3}$")
 
 add_legend([{'ls' : '-', 'label' : 'MHD'}, {'ls' : '--', 'label' : 'HD'}],
                  default_plot_args = {'c' : 'k'})
+
+sm = plt.cm.ScalarMappable(cmap=cmap_name, norm=plt.Normalize(vmin=cb_qnt.min(), vmax=cb_qnt.max()))
+plt.colorbar(sm, ax=ax1, label=r'log $\frac{R}{l_{\rm shatter}}$')

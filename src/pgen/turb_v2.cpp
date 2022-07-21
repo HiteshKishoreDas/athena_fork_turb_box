@@ -125,7 +125,7 @@ static Real B_z = 1.0;
 
 // static Real mH = 1.0; //! Not required?
 
-bool cooling_flag_print_count = false;
+static bool cooling_flag_print_count = false;
 
 bool temp_rescale_flag = true;
 bool cloud_init_flag   = true;
@@ -236,7 +236,10 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
               Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
 
-              cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+              Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+
+              cons(IEN,k,j,i) += ccool;
+              total_cooling -= ccool;
             }
 
 
@@ -259,7 +262,10 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
         else{  // If T<=T_floor
 
           printf("+");
-          cons(IEN,k,j,i) += ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+
+          Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
+          cons(IEN,k,j,i) += ccool;
+          total_cooling -= ccool;
 
         }
 
@@ -270,6 +276,13 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
   return;
 }
 
+
+Real hst_total_cooling(MeshBlock *pmb, int iout) {
+  if(pmb->lid == 0)
+    return total_cooling;
+  else
+    return 0;
+}
 
 //* Source Terms
 void Source(MeshBlock *pmb, const Real time, const Real dt,
@@ -296,6 +309,7 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
   return;
 
 }
+
 
 
 
@@ -341,7 +355,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(9);
+    AllocateUserHistoryOutput(10);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -352,15 +366,17 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(6, By_sum, "By_sum");
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
     EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
+    EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
 
   }
   else {
-    AllocateUserHistoryOutput(4);
+    AllocateUserHistoryOutput(5);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
+    EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
   }
 
   
@@ -452,6 +468,59 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
   return;
 
+}
+
+
+void MeshBlock::InitUserMeshBlockData(ParameterInput *pin){
+  AllocateUserOutputVariables(1);
+  return;
+}
+
+void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
+
+  Real g = peos->GetGamma();
+
+  for(int k=ks; k<=ke; k++) {
+    for(int j=js; j<=je; j++) {
+      for(int i=is; i<=ie; i++) {
+
+        Real lum_cell = 0;
+        Real temp = (phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+
+        if (temp > T_floor) {
+
+            //* For Max's townsend cooling
+
+            if (temp<T_cut){
+              Real rho      = phydro->u(IDN,k,j,i);
+              Real temp_cgs = temp;
+              Real rho_cgs  = rho * unit_density;
+              Real dt_cgs   = pmy_mesh->dt * unit_time;
+              Real cLfac    = 1.0;
+
+              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+
+              Real ccool = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+
+              lum_cell-= ccool;
+            }
+
+            //*_____________________________
+          
+        }
+
+        else{  // If T<=T_floor
+
+          Real ccool = ((T_floor-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1); 
+          lum_cell-= ccool;
+
+        }
+        
+        user_out_var(0,k,j,i) = lum_cell/pmy_mesh->dt;      
+      
+      }
+    }
+  }
 }
 
 //========================================================================================

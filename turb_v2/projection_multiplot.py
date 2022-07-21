@@ -10,15 +10,16 @@ from globals import *
 import v_turb as vt
 
 
-M = 0.25
+M = 0.5
 v_turb_predict = M*vt.cs_calc(ps.T_hot_req,ps.mu)
 t_eddy = ps.L_box/v_turb_predict
 
 fig = plt.figure()
 
-N_list = [501,510,565]
+N_list = [501,520,560]
 
-R_lsh = ["5","50"]
+# R_lsh = ["5","50"]
+R_lsh = ["4","2500"]
 
 def filename(N):
     file_name = f"para_scan{ps.filename_cloud_add(2,0)}/Turb.out2.00{N}.athdf"

@@ -7,21 +7,27 @@ problem_id = Turb # problem ID: basename of output filenames
 
 <output1>
 file_type  = hst        # History data dump
-dt         = 0.0064645221245370685 # time increment between outputs
+dt         = 0.003636824153650942# time increment between outputs
 
 <output2>
 file_type = hdf5                                 # HDF5 data dump
 variable  = prim       # variables to be output
-dt        = 0.025888296545459197 # time increment between outputs
+dt        = 0.014553665833787045# time increment between outputs
 
 <output3>
 file_type = rst                                 
-dt        = 1.385023865182067 # time increment between outputs
+dt        = 0.755467562826582# time increment between outputs
+
+<output4>
+file_type   = hdf5
+dt          = 0.014553665833787045
+variable    = user_out_var
+
 
 <time>
 cfl_number  = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
 nlim        = -1   # cycle limit
-tlim        = 5.540095460728268       # time limit
+tlim        = 8.310143191092402       # time limit
 integrator  = rk2       # time integration algorithm
 xorder      = 2         # order of spatial reconstruction
 ncycle_out  = 1         # interval for stdout summary info

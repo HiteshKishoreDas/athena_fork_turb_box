@@ -14,6 +14,12 @@
 #include <sstream>
 #include <stdexcept>
 
+#include<memory>    // std::unique_ptr
+
+//! Remove if not required
+#include <algorithm>     // max()
+// #include <string>     // c_str(), string
+
 // Athena++ headers
 #include "../athena.hpp"
 #include "../athena_arrays.hpp"
@@ -27,6 +33,38 @@
 #include "../parameter_input.hpp"
 #include "../utils/utils.hpp"
 
+//! Remove if not required
+// #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
+
+// #include "../utils/townsend_cooling.hpp"  // T_new()
+#include "../utils/townsend_cooling_max.hpp" // T_new()
+
+#include "../utils/hst_func.hpp"             // All history output functions
+#include "../utils/code_units.hpp"           // Code units and constants
+
+//* ___________________________
+//* For Max's townsend cooling
+
+using namespace std;
+
+static Real tfloor, tnotcool, tcut_hst, r_drop;
+static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
+static Real total_cooling;
+
+// Returns unique pointer
+// This is a function in C++13 onwards
+// The implementation here is copied from https://stackoverflow.com/a/17903225/1834164
+
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+std::unique_ptr<Cooling> cooler;
+
+//*_____________________________
+
 #ifdef OPENMP_PARALLEL
 #include <omp.h>
 #endif
@@ -35,7 +73,6 @@
 #include <fstream>    // for file io
 #include <iomanip>    // for std::setprecision
 
-#include "../utils/townsend_cooling.hpp"
 
 // Variable read from the input file
 
@@ -43,9 +80,7 @@ static Real L1 = 0.0;
 static Real L2 = 0.0;
 static Real L3 = 0.0;
 
-static Real gamma_in = 5.0/3.0;
-
-static int cooling_flag = 0;
+static int cooling_flag = 1.0;
 
 static Real amb_rho = 1.0;
 
@@ -56,27 +91,11 @@ static Real knx_KH  = 1.0;
 static Real kny_KH  = 1.0; 
 static Real amp_KH = 0.01;    // Amplitude = amp_KH * v_shear
 
-static Real T_floor  = 1e4;  // in K
-static Real T_ceil   = 1e8;   // in K
-static Real T_hot = 1e7;
-static Real T_cold = 2*1e4;
-static Real T_cut_mul = 0.6;
-static Real T_cut;     // = T_cut_mul*T_hot;
-
-static Real X = 1.0;
-static Real Y = 0.0;
-static Real Z = 0.0;
-
 static Real B_x = 0.0;
 static Real B_y = 0.0;
 static Real B_z = 1.0;
 
-
-static Real mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
-static Real mue = 2.0/(1.0+X);
-static Real muH = 1.0/X;
- 
-static Real mH = 1.0;
+static bool cooling_flag_print_count = false;
 
 
 
@@ -88,8 +107,6 @@ void read_input (ParameterInput *pin){
   L1 = pin->GetReal("mesh","x1max") - pin->GetReal("mesh","x1min");
   L2 = pin->GetReal("mesh","x2max") - pin->GetReal("mesh","x2min");
   L3 = pin->GetReal("mesh","x3max") - pin->GetReal("mesh","x3min");
-
-  gamma_in   = pin->GetReal("hydro","gamma");
 
   cooling_flag    = pin->GetInteger("problem","cooling_flag");
 
@@ -110,9 +127,16 @@ void read_input (ParameterInput *pin){
 
   T_cut = T_cut_mul*T_hot;
 
-  X            = pin->GetReal("problem","X");
-  Y            = pin->GetReal("problem","Y");
-  Z            = pin->GetReal("problem","Z");
+  Xsol            = pin->GetReal("problem","Xsol");
+  Zsol            = pin->GetReal("problem","Zsol");
+
+  X = Xsol * 0.7381;
+  Z = Zsol * 0.0134;
+  Y = 1 - X - Z;
+
+  mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
+  mue = 2.0/(1.0+X);
+  muH = 1.0/X;
 
   if (MAGNETIC_FIELDS_ENABLED) {
     B_x = pin->GetReal("problem", "B_x");
@@ -127,7 +151,7 @@ void read_input (ParameterInput *pin){
 }
 
 
-void Cooling(MeshBlock *pmb, const Real time, const Real dt,
+void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
              const AthenaArray<Real> &prim, const AthenaArray<Real> &prim_scalar,
              const AthenaArray<Real> &bcc, AthenaArray<Real> &cons,
              AthenaArray<Real> &cons_scalar) {
@@ -136,48 +160,75 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real sim_time = pmb->pmy_mesh->time;
 
-  // printf("T_cut in Cooling: %lf \n", T_cut);
+  // printf("Inside cooling function stuff!\n");
 
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
-        Real temp = (prim(IPR,k,j,i) / prim(IDN,k,j,i)) * KELVIN * mu ;
+
+        Real temp = (prim(IPR,k,j,i) / cons(IDN,k,j,i)) * KELVIN * mu ;
 
         if (temp > T_floor) {
 
-          if (cooling_flag){
+            //* For own townsend cooling
 
-            Real *lam_para = Lam_file_read(temp);
+            // Real *lam_para = Lam_file_read(temp);
 
             //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
 
+            // Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
+            //                         prim(IDN,k,j,i), dt, 
+            //                         mu, mue, muH, 
+            //                         g, T_floor, T_ceil, T_cut);
 
-            Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
-                                  prim(IDN,k,j,i), dt, 
-                                  mu, mue, muH, 
-                                  g, T_floor, T_ceil);
+                            // Defined in ../utils/townsend_cooling.hpp
 
-            // NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
-            // calculation of T_new as we calculate (dt/tcool)
+            //  NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
+            //  calculation of T_new as we calculate (dt/tcool)
 
-            cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+            // cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+            
+            //* For Max's townsend cooling
 
-            // printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
+            if (temp<T_cut){
+              Real rho      = cons(IDN,k,j,i);
+              Real temp_cgs = temp;
+              Real rho_cgs  = rho * unit_density;
+              Real dt_cgs   = dt  * unit_time;
+              Real cLfac    = 1.0;
+
+              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+
+              Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+
+              cons(IEN,k,j,i) += ccool;
+              total_cooling -= ccool;
+            }
+
+
+            //*_____________________________
+            
+
 
             // ________________________________
             // FOR DEBUG PURPOSES
-            if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
-              printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
-            }
-            // ________________________________
-            
-          }
+            // if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
 
+                // printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
+            // }
+            // ________________________________
+
+
+          
         }
 
-        else if (temp < T_floor){
+        else{  // If T<=T_floor
 
-          cons(IEN,k,j,i) += ((T_floor-temp)/(KELVIN*mu))*prim(IDN,k,j,i)/(g-1);
+          printf("+");
+
+          Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
+          cons(IEN,k,j,i) += ccool;
+          total_cooling -= ccool;
 
         }
 
@@ -191,6 +242,14 @@ void Cooling(MeshBlock *pmb, const Real time, const Real dt,
 
 static int cooling_flag_print_count = 0;
 
+Real hst_total_cooling(MeshBlock *pmb, int iout) {
+  if(pmb->lid == 0)
+    return total_cooling;
+  else
+    return 0;
+}
+
+
 void Source(MeshBlock *pmb, const Real time, const Real dt,
              const AthenaArray<Real> &prim, const AthenaArray<Real> &prim_scalar,
              const AthenaArray<Real> &bcc, AthenaArray<Real> &cons,
@@ -198,268 +257,21 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
 
   if (cooling_flag!=0){
 
-    if (cooling_flag_print_count==0){ 
+    if (!cooling_flag_print_count){ 
       printf("___________________________________________\n");
       printf("!! Cooling included .......................\n");
       printf("___________________________________________\n");
 
-      cooling_flag_print_count += 1;
+      cooling_flag_print_count = true;
     }
 
-    Cooling(pmb, time, dt,
+    townsend_cooling(pmb, time, dt,
             prim, prim_scalar,
             bcc, cons,
             cons_scalar);
   }
 
   return;
-
-}
-
-
-Real cold_gas(MeshBlock *pmb, int iout){
-
-  Real cold_gas_mass=0;
-
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-  
-  for(int k=ks; k<=ke; k++) {
-    for(int j=js; j<=je; j++) {
-      for(int i=is; i<=ie; i++) {
-        
-        Real rho = pmb->phydro->u(IDN,k,j,i);
-        Real prs = pmb->phydro->w(IPR,k,j,i);
-
-        Real temp = (prs / rho) * KELVIN * mu ;
-
-        if (temp <= T_cold){
-          cold_gas_mass += rho*pmb->pcoord->GetCellVolume(k,j,i);
-        }
-
-      }
-    }
-  }
-
-  return cold_gas_mass;
-}
-
-Real rho_sum(MeshBlock *pmb, int iout){
-
-  Real rho_sum    = 0;
-
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-  
-  for(int k=ks; k<=ke; k++) {
-    for(int j=js; j<=je; j++) {
-      for(int i=is; i<=ie; i++) {
-        
-        Real rho = pmb->phydro->u(IDN,k,j,i);
-
-        rho_sum += rho;
-
-      }
-    }
-  }
-
-  return rho_sum;
-}
-
-Real rho_sq_sum(MeshBlock *pmb, int iout){
-
-  Real rho_sq_sum = 0;
-
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-  
-  for(int k=ks; k<=ke; k++) {
-    for(int j=js; j<=je; j++) {
-      for(int i=is; i<=ie; i++) {
-        
-        Real rho = pmb->phydro->u(IDN,k,j,i);
-        rho_sq_sum += rho*rho;
-
-      }
-    }
-  }
-
-  return rho_sq_sum;
-}
-
-Real c_s_sum(MeshBlock *pmb, int iout){
-
-  Real c_s_sum = 0;
-  Real gamma = pmb->peos->GetGamma();
-
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-
-  for(int k=ks; k<=ke; k++) {
-    for(int j=js; j<=je; j++) {
-      for(int i=is; i<=ie; i++) {
-        
-        Real rho = pmb->phydro->u(IDN,k,j,i);
-        Real prs = pmb->phydro->w(IPR,k,j,i);
-
-        c_s_sum += sqrt(gamma*prs/rho);
-
-      }
-    }
-  }
-
-  return c_s_sum;
-}
-
-Real tcool_sum(MeshBlock *pmb, int iout){
-
-  Real tcool_sum = 0;
-  
-  if (cooling_flag!=0){
-    
-
-    Real gamma = pmb->peos->GetGamma();
-    int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-
-    Real dt = pmb->pmy_mesh->dt;
-
-    for(int k=ks; k<=ke; k++) {
-      for(int j=js; j<=je; j++) {
-        for(int i=is; i<=ie; i++) {
-
-          Real rho = pmb->phydro->u(IDN,k,j,i);
-          Real prs = pmb->phydro->w(IPR,k,j,i);
-          Real temp = (prs / rho) * KELVIN * mu ;
-
-          Real *lam_para = Lam_file_read(temp);
-
-          Real T_0  = lam_para[0];
-          Real Lam0 = lam_para[1];
-          Real alp  = lam_para[2];
-      
-          Real tcool = tcool_calc(temp, T_0, Lam0, alp, rho, dt, mu, mue, muH, gamma, T_floor, T_ceil);
-
-          tcool_sum += tcool;
-
-        }
-      }
-    }
-  
-  }
-
-  return tcool_sum;
-
-}
-
-Real Pth_sum(MeshBlock *pmb, int iout){
-
-  Real Pth_sum = 0;
-  
-
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-
-
-  for(int k=ks; k<=ke; k++) {
-    for(int j=js; j<=je; j++) {
-      for(int i=is; i<=ie; i++) {
-
-        Pth_sum += pmb->phydro->w(IPR,k,j,i);
-        
-      }
-    }
-  }
-    
-  
-
-  return Pth_sum;
-
-}
-
-Real PB_sum(MeshBlock *pmb, int iout){
-
-  Real PB_sum = 0;
-  
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;  
-
-  for (int k=ks; k<=ke; ++k) {
-    for (int j=js; j<=je; ++j) {
-      for (int i=is; i<=ie; ++i) {
-        PB_sum += pmb->pfield->b.x1f(k,j,i)*pmb->pfield->b.x1f(k,j,i);
-        PB_sum += pmb->pfield->b.x2f(k,j,i)*pmb->pfield->b.x2f(k,j,i);
-        PB_sum += pmb->pfield->b.x3f(k,j,i)*pmb->pfield->b.x3f(k,j,i);
-      }
-    }
-  }
-
-  for (int k=ks; k<=ke; ++k) {
-    for (int j=js; j<=je; ++j) {
-      PB_sum += pmb->pfield->b.x1f(k,j,ie+1)*pmb->pfield->b.x1f(k,j,ie+1);
-    }
-  }
-
-  for (int k=ks; k<=ke; ++k) {
-    for (int i=is; i<=ie; ++i) {
-      PB_sum += pmb->pfield->b.x2f(k,je+1,i)*pmb->pfield->b.x2f(k,je+1,i);
-    }
-  }
-
-  for (int j=js; j<=je; ++j) {
-    for (int i=is; i<=ie; ++i) {
-      PB_sum += pmb->pfield->b.x3f(ke+1,j,i)*pmb->pfield->b.x3f(ke+1,j,i);
-    }
-  }
-
-  return PB_sum/2.0;
-
-}
-
-Real Bx_sum(MeshBlock *pmb, int iout){
-
-  Real Bx_sum = 0;
-  
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;  
-
-  for (int k=ks; k<=ke; ++k) {
-      for (int j=js; j<=je; ++j) {
-        for (int i=is; i<=ie+1; ++i) {
-          Bx_sum += pmb->pfield->b.x1f(k,j,i);
-        }
-      }
-    }
-
-  return Bx_sum;
-
-}
-
-Real By_sum(MeshBlock *pmb, int iout){
-
-  Real By_sum = 0;
-  
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-
-  for (int k=ks; k<=ke; ++k) {
-      for (int j=js; j<=je+1; ++j) {
-        for (int i=is; i<=ie; ++i) {
-          By_sum += pmb->pfield->b.x2f(k,j,i);
-        }
-      }
-    }
-
-  return By_sum;
-
-}
-
-Real Bz_sum(MeshBlock *pmb, int iout){
-
-  Real Bz_sum = 0;
-  
-  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
-
-  for (int k=ks; k<=ke+1; ++k) {
-      for (int j=js; j<=je; ++j) {
-        for (int i=is; i<=ie; ++i) {
-          Bz_sum += pmb->pfield->b.x3f(k,j,i);
-        }
-      }
-    }
-
-  return Bz_sum;
 
 }
 
@@ -476,59 +288,40 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     SetGravityThreshold(eps);
   }
 
-  // turb_flag is initialzed in the Mesh constructor to 0 by default;
-  // turb_flag = 1 for decaying turbulence
-  // turb_flag = 2 for impulsively driven turbulence
-  // turb_flag = 3 for continuously driven turbulence
-//   turb_flag = pin->GetInteger("problem","turb_flag");
-//   if (turb_flag != 0) {
-// #ifndef FFT
-//     std::stringstream msg;
-//     msg << "### FATAL ERROR in TurbulenceDriver::TurbulenceDriver" << std::endl
-//         << "non zero Turbulence flag is set without FFT!" << std::endl;
-//     ATHENA_ERROR(msg);
-//     return;
-// #endif
-//   }
 
-
-  // Read all the static variables from the input file
+  //* Read all the static variables from the input file
   read_input(pin);
 
-  // printf("T_cut in InitUserMeshData: %lf \n", T_cut);
-
-  //====================  NEW  ======================================
-
-
+  //* Enroll the Source terms
   EnrollUserExplicitSourceFunction(Source);
-  printf("\n__________Source! Inside InitUserMeshData________________\n");
 
+  cooler = make_unique<Cooling>();
 
+  //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
     AllocateUserHistoryOutput(10);
 
-    EnrollUserHistoryOutput(0, cold_gas, "cold_gas");
-    EnrollUserHistoryOutput(1, rho_sum, "rho_sum");
-    EnrollUserHistoryOutput(2, rho_sq_sum, "rho_sq_sum");
-    EnrollUserHistoryOutput(3, c_s_sum, "c_s_sum");
-    EnrollUserHistoryOutput(4, tcool_sum, "tcool_sum");
-    EnrollUserHistoryOutput(5, Pth_sum, "Pth_sum");
-    EnrollUserHistoryOutput(6, PB_sum, "PB_sum");
-    EnrollUserHistoryOutput(7, Bx_sum, "Bx_sum");
-    EnrollUserHistoryOutput(8, By_sum, "By_sum");
-    EnrollUserHistoryOutput(9, Bz_sum, "Bz_sum");
-
+    EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
+    EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
+    EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
+    EnrollUserHistoryOutput(3, Pth_sum, "Pth_sum");
+    EnrollUserHistoryOutput(4, PB_sum, "PB_sum");
+    EnrollUserHistoryOutput(5, Bx_sum, "Bx_sum");
+    EnrollUserHistoryOutput(6, By_sum, "By_sum");
+    EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
+    EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
+    EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
   }
   else {
 
     AllocateUserHistoryOutput(5);
 
-    EnrollUserHistoryOutput(0, cold_gas, "cold_gas");
-    EnrollUserHistoryOutput(1, rho_sum, "rho_sum");
-    EnrollUserHistoryOutput(2, rho_sq_sum, "rho_sq_sum");
-    EnrollUserHistoryOutput(3, c_s_sum, "c_s_sum");
-    EnrollUserHistoryOutput(4, tcool_sum, "tcool_sum");
+    EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
+    EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
+    EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
+    EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
+    EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
 
   }
 
@@ -544,7 +337,9 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
-  // Read all the static variables from the input file
+  Real g   = pin->GetReal("hydro","gamma");
+
+  //* Read all the static variables from the input file
   read_input(pin);
 
   Real A_KH = amp_KH * v_shear;
@@ -588,7 +383,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           phydro->u(IEN,k,j,i) /= 2.0*phydro->u(IDN,k,j,i);
 
           //Internal energy
-          phydro->u(IEN,k,j,i) += (T_hot/(KELVIN*mu))*amb_rho/(gamma_in-1);
+          phydro->u(IEN,k,j,i) += (T_hot/(KELVIN*mu))*amb_rho/(g-1);
         }
 
         // printf("rho: %f\n",phydro->u(IDN,k,j,i));
@@ -641,10 +436,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
 }
 
-//========================================================================================
-//! \fn void Mesh::UserWorkAfterLoop(ParameterInput *pin)
-//  \brief
-//========================================================================================
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin){
   AllocateUserOutputVariables(1);
@@ -653,33 +444,54 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin){
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 
+  Real g = peos->GetGamma();
+
   for(int k=ks; k<=ke; k++) {
     for(int j=js; j<=je; j++) {
       for(int i=is; i<=ie; i++) {
 
-        Real temp = ( phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i) ) * KELVIN * mu ;
-        Real *lam_para = Lam_file_read(temp);
+        Real lum_cell = 0;
+        Real temp = (phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
 
-        Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
-                                  phydro->u(IDN,k,j,i), pmy_mesh->dt, 
-                                  mu, mue, muH, 
-                                  gamma_in, T_floor, T_ceil);
+        if (temp > T_floor) {
 
+            //* For Max's townsend cooling
 
-        // Real tcool = tcool_calc(temp, lam_para[0], lam_para[1], lam_para[2],
-        //             phydro->u(IDN,k,j,i), 1.0, 
-        //             mu, mue, muH, 
-        //             gamma_in, T_floor, T_ceil);
+            if (temp<T_cut){
+              Real rho      = phydro->u(IDN,k,j,i);
+              Real temp_cgs = temp;
+              Real rho_cgs  = rho * unit_density;
+              Real dt_cgs   = pmy_mesh->dt * unit_time;
+              Real cLfac    = 1.0;
 
+              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+
+              Real ccool = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+
+              lum_cell-= ccool;
+            }
+
+            //*_____________________________
+          
+        }
+
+        else{  // If T<=T_floor
+
+          Real ccool = ((T_floor-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1); 
+          lum_cell-= ccool;
+
+        }
         
-        Real dE = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(gamma_in-1);
-
-        user_out_var(0,k,j,i) = dE/pmy_mesh->dt;      
+        user_out_var(0,k,j,i) = lum_cell/pmy_mesh->dt;      
       
       }
     }
   }
 }
 
+//========================================================================================
+//! \fn void Mesh::UserWorkAfterLoop(ParameterInput *pin)
+//  \brief
+//========================================================================================
 void Mesh::UserWorkAfterLoop(ParameterInput *pin) {
 }

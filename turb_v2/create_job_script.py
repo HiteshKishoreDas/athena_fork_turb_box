@@ -47,13 +47,14 @@ def jobscript_cloud_new(i, j,template='template_dir/job_script_cloud_template.sh
         template_data = file.read()
 
     if ps.B_flag:
-        job_name = f'mhd{i}{j}_{ps.rseed}'
+        job_name = f'm{i}{j}M{ps.i_mach}{ps.rseed}'
     else:
-        job_name = f'hyd{i}{j}_{ps.rseed}'
+        job_name = f'h{i}{j}M{ps.i_mach}{ps.rseed}'
     
     work_dir   = f'{ps.parent_dir}/para_scan{ps.filename_cloud_add(i,j)}/'
     input_file = f'athinput_cloud{ps.filename_cloud_add(i,j)}.turb'
-    rst_file   = f'../Turbulence/para_scan{ps.filename_turb_add(i,j)}/Turb.final.rst'   
+    turb_dir   = f'para_scan{ps.filename_turb_add(i,j)}'   
+    rst_file   = f'../Turbulence/{turb_dir}/Turb.final.rst'   
 
 
     template_data = tag_replace(template_data,"!!JOB_NAME!!",job_name)
@@ -65,6 +66,8 @@ def jobscript_cloud_new(i, j,template='template_dir/job_script_cloud_template.sh
     template_data = tag_replace(template_data,"!!TIME_LIMIT_RST!!",ps.time_limit_cloud_rst[j])
 
     template_data = tag_replace(template_data,"!!WORK_DIR!!",work_dir)
+    template_data = tag_replace(template_data,"!!TURB_DIR!!",turb_dir)
+
     template_data = tag_replace(template_data,"!!INPUT_FILE!!",input_file)
     template_data = tag_replace(template_data,"!!RST_FILE!!",rst_file)
 

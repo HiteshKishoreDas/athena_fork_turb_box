@@ -52,9 +52,9 @@ mue = 2.0/(1.0+X)
 muH = 1.0/X
 mH  = 1.0
 
-# R_lsh = np.array([2500])
-R_lsh = np.array([100,250,500,1000,2500, 50, 10, 5, 2, 1])
-# R_lsh = np.array([50,100,750,1000,2500,5000])
+# R_lsh = np.array([5,10,50,250,500])         # For M = 0.25
+R_lsh = np.array([10,50,100,250,500,1000])     # For M = 0.5
+# R_lsh = np.array([250,500,1000,2500,5000])  # For M = 0.9
 
 t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z)
 t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(cloud_chi_temp),np.sqrt(T_floor*T_hot_req),Z)
@@ -81,7 +81,11 @@ cloud_flag   = 1  # 1 for a cloud and 0 for no cloud
 # Magnetic field flag
 B_flag       = 0  # 1 for adding magnetic fields
 
-M = 0.25     # Required Mach number
+Mach_arr = np.array([0.25, 0.5, 0.9])
+
+M = 0.5     # Required Mach number
+i_mach = np.argwhere(Mach_arr==M)[0][0]
+
 
 if B_flag:
 
@@ -106,12 +110,12 @@ x3max = L_box/2
 x3min = -1*x3max
 
 # Number of cells
-nx1 = np.array([128])
-nx2 = np.array([128])
-nx3 = np.array([128])
+nx1 = np.array([256])
+nx2 = np.array([256])
+nx3 = np.array([256])
 
-nx1_mesh = np.array([32])
-nx2_mesh = np.array([32])
+nx1_mesh = np.array([16])
+nx2_mesh = np.array([16])
 nx3_mesh = np.array([32])
 
 # predicted turbulent velocity
@@ -123,7 +127,7 @@ v_turb_predict = M*vt.cs_calc(T_hot_req,mu)
 t_eddy = L_box/v_turb_predict
 
 tlim_trb  =   7*t_eddy #np.max(np.array([5*t_eddy, 2*t_cool_amb]) )
-tlim_cld  =  10*t_eddy #np.max(np.array([5*t_eddy, 2*t_cool_amb]) )
+tlim_cld  =  15*t_eddy #np.max(np.array([5*t_eddy, 2*t_cool_amb]) )
 
 
 # dt for history output from tlim
@@ -191,16 +195,16 @@ else:
 
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
-queue = "medium" # "n0064"
+queue = "n0064"
 ntasks_per_node = 32
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 
-time_limit_turb      = ["11:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_turb_rst  = ["11:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_turb      = ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_turb_rst  = ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
-time_limit_cloud     = ["11:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_cloud_rst = ["11:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_cloud     = ["23:59:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_cloud_rst = ["23:55:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
 restart_N = 10
 

@@ -44,6 +44,7 @@ for i_MHD, MHD_flag in enumerate(MHD):
         x_data = time
         y_data = cold_gas/cold_gas[0]
 
+        y_data= sg.savgol_filter(y_data, window_length=11, polyorder=3)
         
         dy = np.roll(y_data,-1) - y_data
         dx = np.roll(x_data,-1) - x_data
@@ -57,10 +58,10 @@ for i_MHD, MHD_flag in enumerate(MHD):
 
         tgrow = np.abs(tgrow)
 
-        tgrow = sg.savgol_filter(tgrow, window_length=5, polyorder=3)
+        # tgrow = sg.savgol_filter(tgrow, window_length=11, polyorder=3)
 
-        x_data = x_data[tgrow>1e-3]
-        tgrow  = tgrow [tgrow>1e-3]
+        # x_data = x_data[tgrow>1e-3]
+        # tgrow  = tgrow [tgrow>1e-3]
 
         if MHD_flag:
             plt.plot(x_data,tgrow, color=line_col[i], linestyle=linestyle_list[i_MHD]\
@@ -77,11 +78,12 @@ for i_MHD, MHD_flag in enumerate(MHD):
             plt.axhline(tg.tgrow(100, M, ps.R_lsh[i], 40, ps.t_cool_cloud),\
                 linestyle='dotted',color=line_col[i],linewidth=3,label=r'Theoretical t$_{\rm grow}$')
 
-plt.yscale('log')
+# plt.yscale('log')
 plt.legend(loc='upper center')
 
 # plt.xlim(0,3)
-plt.ylim(1e-1,3e0)
+# plt.ylim(1e-1,4e0)
+plt.ylim(0,1)
 
 plt.xlabel(r't/t$_{\rm eddy}$')
 plt.ylabel(r't$_{\rm grow}$ = $\frac{m_{\rm cold}}{\dot{m}_{\rm cold}}$')

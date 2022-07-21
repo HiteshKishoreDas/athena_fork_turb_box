@@ -27,6 +27,9 @@ module list
 
 cd /ptmp/hitesh/athena_fork_turb_box/!!WORK_DIR!!
 
+cp ../!!TURB_DIR/Turb.hst ./
+mv ../!!TURB_DIR!! ../Turbulence/
+
 srun ./athena_turb -r !!RST_FILE!! -i !!INPUT_FILE!! -t !!TIME_LIMIT_RST!!
 
 echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"

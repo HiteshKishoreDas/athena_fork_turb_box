@@ -7,14 +7,14 @@ import create_job_script as cj
 
 
 # for i in range(np.size(R_lsh)): # np.size(nx1)):
-for i in range(5, np.size(R_lsh)): # np.size(nx1)):
+for i in range(np.size(R_lsh)): # np.size(nx1)):
     for j in range(np.size(nx1)):
 
         ## os.system('source ../load_module')
         os.system(f'cp -r template_dir para_scan'+filename_turb_add(i,j))
         
         os.system(f'rm para_scan'+filename_turb_add(i,j)+'/job_script_turb_template.sh')
-        os.system(f'rm para_scan'+filename_turb_add(i,j)+'/athinput.turb_v2_template')
+        os.system(f'rm para_scan'+filename_turb_add(i,j)+'/athinput.turb_v2_turb_template')
         
         os.system(f'rm para_scan'+filename_turb_add(i,j)+'/job_script_cloud_template.sh')
         os.system(f'rm para_scan'+filename_turb_add(i,j)+'/athinput.turb_v2_cloud_template')
