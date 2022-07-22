@@ -75,7 +75,7 @@ cloud_flag   = 0  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 0  # 1 for adding magnetic fields
+B_flag       = 1  # 1 for adding magnetic fields
 
 M  = 0.5     # Required Mach number
 Ma = np.array([0.1, 10])
@@ -87,7 +87,7 @@ x1min = np.array([0.0])
 x2max = box_width
 x2min = np.array([0.0])
 
-x3max = box_length*0.8
+x3max = box_length*0.5  # 0.8
 x3min = x3max - box_length
 
 # Number of cells
@@ -184,3 +184,11 @@ def filename_mix_add (i,j,k):
     else:
         return f'_rho{i}_Ma{j}_Bnot_hydro'
     # return f'_res_256_Rlsh_0'
+
+#* For access to plotting scripts
+def filename_mix_add_ext (i, j, k, MHD_flag):
+
+    if MHD_flag:
+        return f'_rho{i}_Ma{j}_B{k}'
+    else:
+        return f'_rho{i}_Ma{j}_Bnot_hydro'

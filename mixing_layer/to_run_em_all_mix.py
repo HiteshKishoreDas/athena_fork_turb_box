@@ -6,9 +6,9 @@ import create_input as ci
 import create_job_script as cj
 
 
-for i in range(np.size(ps.amb_rho)):
-    for j in range(np.size(ps.Ma)):
-        for k in range(np.size(ps.B_dir)):
+for i in [0]: #range(np.size(ps.amb_rho)):
+    for j in [0]: #range(np.size(ps.Ma)):
+        for k in [1]: # range(np.size(ps.B_dir)):
 
              ## os.system('source ../load_module')
             os.system(f'cp -r template_dir mix'+ps.filename_mix_add(i,j,k))

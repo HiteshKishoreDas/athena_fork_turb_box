@@ -46,8 +46,8 @@ ix2_bc     = periodic   # inner-X2 boundary flag
 ox2_bc     = periodic   # outer-X2 boundary flag
 
 nx3        = 640        # Number of zones in X3-direction
-x3min      = -0.008611064334512204      # minimum value of X3
-x3max      = 0.03444425733804881      # maximum value of X3
+x3min      = -0.021527660836280507      # minimum value of X3
+x3max      = 0.021527660836280507      # maximum value of X3
 ix3_bc     = outflow    # inner-X3 boundary flag
 ox3_bc     = outflow    # outer-X3 boundary flag
 

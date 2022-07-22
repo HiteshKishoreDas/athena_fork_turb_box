@@ -3,55 +3,74 @@ import yt
 from yt import derived_field
 
 import sys
-sys.path.insert(0, '../vis/python')
-import athena_read
+# sys.path.insert(0, '../vis/python')
+# import athena_read as ar
+import globals as g
+import para_scan as ps
 
-@derived_field(name="beta", sampling_type="cell")
-def _beta(field, data):
+@derived_field(name="temp", sampling_type="cell")
+def _temp(field, data):
     return (
-        data["athena_pp", "press"]/data["gas","magnetic_pressure"] 
+        data["athena_pp", "press"]/data["gas","density"]  * g.KELVIN * g.mu
     )
 
 # units_override = {"length_unit": (1.0, "kpc"),
 #                   "time_unit"  : (1.0, "Myr"),
 #                   "density_unit"  : (2.454e7, "Msun/kpc**3")}
 
-# dirname = 'test_sechs_Bx_cool'
-dirname = 'test_seben_By_cool'
-# dirname = 'test_acht_Bz_cool/low_beta'
-# dirname = 'test_neun_hyd_cool'
+N = 5  
 
-N = 25
+i = 0 
+j = 0 
+k = 2 
+B_fl = True 
 
-file_name = dirname + f'/Turb.out2.{str(N).zfill(5)}.athdf'
+file_add = ps.filename_mix_add_ext(i,j,k,B_fl)
+dir_name = f'mix{file_add}'
+file_name = f'{dir_name}/Turb.out2.{str(N).zfill(5)}.athdf'
 
-ds = yt.load(file_name)
+ds = yt.load(file_name) # [:,:,:320]
 
-# data = athena_read.athdf(file_name)
-# print(np.min(data['rho']))
-# print(np.max(data['rho']))
 
 # p = yt.SlicePlot(ds,axis='y',fields="press")
-# p = yt.ProjectionPlot(ds,axis='x',fields="rho")
-p = yt.SlicePlot(ds,axis='y',fields="beta")
+# p = yt.ProjectionPlot(ds,axis='y',fields="temp")
+
+z_center = ps.box_length[0]*-0.1
+
+p = yt.SlicePlot(ds,axis='y',fields="temp", \
+                 center=[ps.box_width/2,ps.box_width/2,z_center], \
+                 width=(1e-2,4.3e-3), \
+                 origin='native')
+    
+# p = yt.ProjectionPlot(ds,axis='y',fields="temp", \
+#                  center=[ps.box_width/2,ps.box_width/2,z_center], \
+#                  width=(1e-2,4.3e-3), \
+#                  origin='native')
+
 # p = yt.SlicePlot(ds,axis='y',fields="beta")
 
-# p.set_cmap(field="rho", cmap="CMRmap")
-# p.set_cmap(field="rho", cmap="RdGy")
-p.set_cmap(field="beta", cmap="RdGy")
+# p.annotate_streamlines(("vel3"), ("vel1"))
+p.annotate_streamlines(("Bcc3"), ("Bcc1"))
+
+# p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
+
+p.set_cmap(field="temp", cmap="CMRmap")
+# p.set_cmap(field="temp", cmap="RdGy_r")
+# p.set_cmap(field="beta", cmap="RdGy")
 # p.set_cmap(field="vel1", cmap="RdGy")
 
 # p.zoom(2)
 
-# p.set_zlim("rho",5e-2, 5e-1)
+
+p.set_zlim("temp",4e4, 4e6)
 # p.set_zlim("rho",5, 50)
 # p.set_zlim("vel3",-0.17, 0.17)
 # p.set_zlim("vel1",-0.17, 0.17)
 # p.set_zlim(('gas','mach_alfven'), 1e-1,1e1 )
-p.set_zlim("beta",1e-1, 1e1 )
+# p.set_zlim("beta",1e-1, 1e1 )
 # p.set_zlim("Ma",1e-1, 1e2)
 
-p.save("Plots/beta_By.png")
+# p.save("Plots/beta_By.png")
 
 p.show()
 
