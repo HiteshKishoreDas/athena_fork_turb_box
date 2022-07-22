@@ -75,7 +75,7 @@ cloud_flag   = 0  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 1  # 1 for adding magnetic fields
+B_flag       = 0  # 1 for adding magnetic fields
 
 M  = 0.5     # Required Mach number
 Ma = np.array([0.1, 10])
@@ -165,13 +165,13 @@ if B_flag:
 
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
-queue = "p.test" # "p.24h"
+queue = "p.24h"
 ntasks_per_node = 32
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 
-time_limit     = ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_rst = ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit     = ["23:55:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_rst = ["23:52:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
 
 

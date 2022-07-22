@@ -21,7 +21,7 @@ def jobscript_mix_new(i, j, k, template='template_dir/job_script_mix_template.sh
         job_name = f'h{i}{j}{k}'
     
     work_dir = ps.parent_dir+f'/mix'+ps.filename_mix_add(i,j,k)+'/'
-    input_file = f'athinput_mix'+ps.filename_mix_add(i,j,k)+'.turb'
+    input_file = f'athinput_mix'+ps.filename_mix_add(i,j,k)
 
     template_data = tag_replace(template_data,"!!JOB_NAME!!",job_name)
     template_data = tag_replace(template_data,"!!QUEUE!!",ps.queue)
