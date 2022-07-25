@@ -8,80 +8,79 @@ import sys
 import globals as g
 import para_scan as ps
 
+
 @derived_field(name="temp", sampling_type="cell")
 def _temp(field, data):
     return (
-        data["athena_pp", "press"]/data["gas","density"]  * g.KELVIN * g.mu
+        data["athena_pp", "press"]/data["gas", "density"] * g.KELVIN * g.mu
     )
 
+
+@derived_field(name="total_pressure", sampling_type="cell", units="code_mass/(code_length*code_time**2)")
+def _total_pressure(field, data):
+    return (
+        data["athena_pp", "press"]+data["gas", "magnetic_pressure"]
+    )
 # units_override = {"length_unit": (1.0, "kpc"),
 #                   "time_unit"  : (1.0, "Myr"),
 #                   "density_unit"  : (2.454e7, "Msun/kpc**3")}
 
-N = 5  
 
-i = 0 
-j = 0 
-k = 2 
-B_fl = True 
+N = 100
 
-file_add = ps.filename_mix_add_ext(i,j,k,B_fl)
+i = 1
+j = 1
+k = 2
+B_fl = True
+
+file_add = ps.filename_mix_add_ext(i, j, k, B_fl)
 dir_name = f'mix{file_add}'
 file_name = f'{dir_name}/Turb.out2.{str(N).zfill(5)}.athdf'
 
-ds = yt.load(file_name) # [:,:,:320]
+ds = yt.load(file_name)  # [:,:,:320]
+
+field_list = ["rho", "vel1", "vel3"]
+log_scale  = [True , False , False ]
+anno_scale = [False, False , False ]
+
+z_min  = [ ps.amb_rho[i]     , -0.1 , -0.001  ]
+z_max  = [ 100*ps.amb_rho[i] ,  0.2 ,  0.002  ]
+
+for i_fld, fld in enumerate(field_list):
+
+    p = yt.SlicePlot(ds, axis='y', fields=fld)
+    # p = yt.ProjectionPlot(ds,axis='y',fields="total_pressure")
+
+    z_center = ps.box_length[0]*-0.05
+
+    # p = yt.SlicePlot(ds,axis='y',fields=fld, \
+    #                  center=[ps.box_width/2,ps.box_width/2,z_center], \
+    #                  width=(0.5*1e-2,4.3e-3), \
+    #                  origin='native')
 
 
-# p = yt.SlicePlot(ds,axis='y',fields="press")
-# p = yt.ProjectionPlot(ds,axis='y',fields="temp")
+    # p = yt.ProjectionPlot(ds,axis='y',fields="temp", \
+    #                  center=[ps.box_width/2,ps.box_width/2,z_center], \
+    #                  width=(1e-2,4.3e-3), \
+    #                  origin='native')
 
-z_center = ps.box_length[0]*-0.1
+    p.set_log(fld, log_scale[i_fld])
 
-p = yt.SlicePlot(ds,axis='y',fields="temp", \
-                 center=[ps.box_width/2,ps.box_width/2,z_center], \
-                 width=(1e-2,4.3e-3), \
-                 origin='native')
-    
-# p = yt.ProjectionPlot(ds,axis='y',fields="temp", \
-#                  center=[ps.box_width/2,ps.box_width/2,z_center], \
-#                  width=(1e-2,4.3e-3), \
-#                  origin='native')
+    if anno_scale[i_fld]:
+        p.annotate_streamlines(("vel3"), ("vel1"))
+        # p.annotate_streamlines(("Bcc3"), ("Bcc1"))
 
-# p = yt.SlicePlot(ds,axis='y',fields="beta")
+    # p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
 
-# p.annotate_streamlines(("vel3"), ("vel1"))
-p.annotate_streamlines(("Bcc3"), ("Bcc1"))
+    # p.set_cmap(field=fld, cmap="CMRmap")
+    p.set_cmap(field=fld, cmap="RdGy")
 
-# p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
-
-p.set_cmap(field="temp", cmap="CMRmap")
-# p.set_cmap(field="temp", cmap="RdGy_r")
-# p.set_cmap(field="beta", cmap="RdGy")
-# p.set_cmap(field="vel1", cmap="RdGy")
-
-# p.zoom(2)
+    # p.zoom(2)
 
 
-p.set_zlim("temp",4e4, 4e6)
-# p.set_zlim("rho",5, 50)
-# p.set_zlim("vel3",-0.17, 0.17)
-# p.set_zlim("vel1",-0.17, 0.17)
-# p.set_zlim(('gas','mach_alfven'), 1e-1,1e1 )
-# p.set_zlim("beta",1e-1, 1e1 )
-# p.set_zlim("Ma",1e-1, 1e2)
-
-# p.save("Plots/beta_By.png")
-
-p.show()
+    p.set_zlim(fld, z_min[i_fld], z_max[i_fld])
 
 
+    p.save(f"Plots/{fld}_{str(N).zfill(5)}.png")
 
-
-# ds = yt.load(file_name)#, units_override=units_override)
-
-# B  = data['Bcc1'] * data['Bcc1']
-# B += data['Bcc2'] * data['Bcc2']
-# B += data['Bcc3'] * data['Bcc3']
-# B = np.sqrt(B)
-
-# Ma_calc = 0.17/B
+    p.show()

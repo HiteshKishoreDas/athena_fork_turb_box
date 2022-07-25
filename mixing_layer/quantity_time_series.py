@@ -18,10 +18,11 @@ legend_list = ['B_x'    , 'B_y'       , 'B_z'      , 'hydro'   ]
 
 fig, ax = plt.subplots(nrows=2, ncols=2, figsize = (20,25))
 
-for i in range(len(ps.amb_rho)):
+for i_p in range(len(ps.amb_rho)):
+
+    i = (len(ps.amb_rho)-1) - i_p
+
     for j in range(len(ps.Ma)):
-
-
         for k in range(3):
             for B_fl in [True, False]:
             # for B_fl in [False]:
@@ -34,7 +35,9 @@ for i in range(len(ps.amb_rho)):
                 else:
                     plot_i = k
                 
-                file_add = ps.filename_mix_add_ext(i,j,k,B_fl)
+                file_add = ps.filename_mix_add_ext(i_p,j,k,B_fl)
+                if not B_fl:
+                    setup_name = file_add
                 dir_name = f'mix{file_add}'
 
                 hst = hr.hst_data(f'{dir_name}/Turb.hst', ncells, B_fl)     
@@ -69,8 +72,13 @@ for i in range(len(ps.amb_rho)):
                 dcool = np.roll(tot_cool, -1) - tot_cool
                 dt    = np.roll(hst.time, -1) - hst.time
 
+                dcool = dcool   [hst.cold_gas_fraction>0.1]
+                dt    = dt      [hst.cold_gas_fraction>0.1]
+                time  = hst.time[hst.cold_gas_fraction>0.1]
+
+
                 luminosity = (dcool/dt)[1:-1]/(ps.box_width**2)
-                time       = np.copy(hst.time[1:-1])
+                time       = time[1:-1]
 
                 ax[i,j].plot(time, luminosity, color=col_list[plot_i], label=legend_list[plot_i])
 
@@ -90,8 +98,8 @@ for i in range(len(ps.amb_rho)):
         ax[i,j].set_xlabel('time (Myr)')
         ax[i,j].set_ylabel('Luminosity')
 
-        tcool_tKH = np.round(ps.t_cool_mix[i]/ps.t_KH[0], 3)
-        ax[i,j].set_title(r"$\mathcal{M}_{\rm a}$"+f" = {ps.Ma[j]}; " + r"t$_{\rm cool}$/t$_{\rm KH}$" + f" = {tcool_tKH}" + f"; Da = {np.round(1/(np.sqrt(ps.chi_cold)*tcool_tKH), 3)}")
+        tcool_tKH = np.round(ps.t_cool_mix[i_p]/ps.t_KH[0], 3)
+        ax[i,j].set_title(r"$\mathcal{M}_{\rm a}$"+f" = {ps.Ma[j]}; " + r"t$_{\rm cool}$/t$_{\rm KH}$" + f" = {tcool_tKH}" + f"; Da = {np.round(1/(np.sqrt(ps.chi_cold)*tcool_tKH), 3)}"+f"\n {setup_name}")
 
         # if i==0:
         #     ax[i,j].set_ylim(1e4, 2e6)
