@@ -25,7 +25,7 @@ module list
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib/release/
 
-cd /ptmp/hitesh/athena_fork_turb_box/!!WORK_DIR!!
+cd /ptmp/!!DIR_PATH_ADD!!hitesh/athena_fork_turb_box/!!WORK_DIR!!
 
 srun ./athena_turb -i !!INPUT_FILE!! -t !!TIME_LIMIT_RST!!
 

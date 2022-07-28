@@ -25,9 +25,9 @@ module list
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib/release/
 
-cd /ptmp/hitesh/athena_fork_turb_box/!!WORK_DIR!!
+cd /ptmp/!!DIR_PATH_ADD!!hitesh/athena_fork_turb_box/!!WORK_DIR!!
 
-cp ../!!TURB_DIR/Turb.hst ./
+cp ../!!TURB_DIR!!/Turb.hst ./
 mv ../!!TURB_DIR!! ../Turbulence/
 
 srun ./athena_turb -r !!RST_FILE!! -i !!INPUT_FILE!! -t !!TIME_LIMIT_RST!!

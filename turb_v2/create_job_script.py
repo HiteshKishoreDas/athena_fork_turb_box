@@ -31,6 +31,7 @@ def jobscript_turb_new(i, j,template='template_dir/job_script_turb_template.sh')
     template_data = tag_replace(template_data,"!!TIME_LIMIT!!",ps.time_limit_turb[j])
     template_data = tag_replace(template_data,"!!TIME_LIMIT_RST!!",ps.time_limit_turb_rst[j])
 
+    template_data = tag_replace(template_data,"!!DIR_PATH_ADD!!",ps.dir_path_add)
 
     template_data = tag_replace(template_data,"!!WORK_DIR!!",work_dir)
     template_data = tag_replace(template_data,"!!INPUT_FILE!!",input_file)
@@ -67,6 +68,8 @@ def jobscript_cloud_new(i, j,template='template_dir/job_script_cloud_template.sh
 
     template_data = tag_replace(template_data,"!!WORK_DIR!!",work_dir)
     template_data = tag_replace(template_data,"!!TURB_DIR!!",turb_dir)
+
+    template_data = tag_replace(template_data,"!!DIR_PATH_ADD!!",ps.dir_path_add)
 
     template_data = tag_replace(template_data,"!!INPUT_FILE!!",input_file)
     template_data = tag_replace(template_data,"!!RST_FILE!!",rst_file)

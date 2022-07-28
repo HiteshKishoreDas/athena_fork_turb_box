@@ -79,7 +79,7 @@ cloud_flag   = 1  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 0  # 1 for adding magnetic fields
+B_flag       = 1  # 1 for adding magnetic fields
 
 Mach_arr = np.array([0.25, 0.5, 0.9])
 
@@ -110,12 +110,12 @@ x3max = L_box/2
 x3min = -1*x3max
 
 # Number of cells
-nx1 = np.array([256])
-nx2 = np.array([256])
-nx3 = np.array([256])
+nx1 = np.array([128]) # np.array([256])
+nx2 = np.array([128]) # np.array([256])
+nx3 = np.array([128]) # np.array([256])
 
-nx1_mesh = np.array([16])
-nx2_mesh = np.array([16])
+nx1_mesh = np.array([32])
+nx2_mesh = np.array([32])
 nx3_mesh = np.array([32])
 
 # predicted turbulent velocity
@@ -155,7 +155,7 @@ rst_dt_trb_arr = tlim_trb/rst_dt_N
 rst_dt_cld_arr = tlim_cld/(rst_dt_N * (tlim_cld-tlim_trb)/tlim_trb).astype(int)
 
 # ratio of shear component
-f_shear = 0.3
+f_shear = 0.0 # 0.3
 
 # rseed
 rseed = 1
@@ -171,7 +171,7 @@ cloud_time   = 7*t_eddy
 # beta_list = np.array([1,2,5,10,100,1000])
 # beta_list = np.array([2])
 
-beta_list = 100
+beta_list = 0.1 #100
 
 if B_flag:
 
@@ -195,16 +195,23 @@ else:
 
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
-queue = "n0064"
+cluster_name = "freya"
+
+if cluster_name=="freya":
+    dir_path_add = "mpa/"
+else:
+    dir_path_add = ""
+
+queue = "p.24h" #"medium" # "n0064"
 ntasks_per_node = 32
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 
-time_limit_turb      = ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_turb_rst  = ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_turb      = ["23:49:00"] # ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_turb_rst  = ["23:35:00"] # ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
-time_limit_cloud     = ["23:59:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_cloud_rst = ["23:55:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_cloud     = ["23:59:00"] # ["23:59:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_cloud_rst = ["23:55:00"] # ["23:55:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
 restart_N = 10
 
@@ -218,20 +225,20 @@ t_cc = np.sqrt(cloud_chi)*cloud_radius/v_turb_predict
 def filename_turb_add (i,j):
 
     if B_flag:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
     else:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
 
 def filename_cloud_add (i,j):
 
     if B_flag:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_beta_{beta_list}'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_beta_{beta_list}'
     else:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_hydro'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_hydro'
 
 def filename_cloud_func (i,j,rseed,Mach,cloud_chi,beta,MHD_flag):
 
     if MHD_flag:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_beta_{beta}'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_beta_{beta}'
     else:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_hydro'
+        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_hydro'

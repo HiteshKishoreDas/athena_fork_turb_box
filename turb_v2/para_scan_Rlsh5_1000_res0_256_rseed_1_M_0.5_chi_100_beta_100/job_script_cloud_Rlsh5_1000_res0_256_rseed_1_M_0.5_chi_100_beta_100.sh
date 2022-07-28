@@ -27,7 +27,7 @@ module list
 
 cd /ptmp/hitesh/athena_fork_turb_box/turb_v2/para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_chi_100_beta_100/
 
-cp ../!!TURB_DIR/Turb.hst ./
+cp ../para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_beta_100/Turb.hst ./
 mv ../para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_beta_100 ../Turbulence/
 
 srun ./athena_turb -r ../Turbulence/para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_beta_100/Turb.final.rst -i athinput_cloud_Rlsh5_1000_res0_256_rseed_1_M_0.5_chi_100_beta_100.turb -t 23:55:00
