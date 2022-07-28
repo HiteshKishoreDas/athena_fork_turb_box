@@ -20,7 +20,7 @@ fig, ax = plt.subplots(nrows=2, ncols=2, figsize = (20,25))
 
 for i_p in range(len(ps.amb_rho)):
 
-    i = (len(ps.amb_rho)-1) - i_p
+    i = i_p #(len(ps.amb_rho)-1) - i_p
 
     for j in range(len(ps.Ma)):
         for k in range(3):
@@ -90,6 +90,7 @@ for i_p in range(len(ps.amb_rho)):
                     L_avg = np.average(luminosity[-100:])
                     ax[i,j].axhline(L_avg, linestyle='dashed', color=col_list[plot_i],\
                         label=r'L$_{\rm avg}$'+ f' = {np.round(L_avg,3)}')
+                    print(L_avg)
 
 
         ax[i,j].set_yscale('log')

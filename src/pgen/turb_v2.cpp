@@ -485,7 +485,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
       for(int i=is; i<=ie; i++) {
 
         Real lum_cell = 0;
-        Real temp = (phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+        Real temp = (phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu;
 
         if (temp > T_floor) {
 
