@@ -33,7 +33,7 @@ athena
 *.tab
 *.vtk
 *.athdf*
-*.hst
+# *.hst
 *.rst
 meshtest.dat
 
