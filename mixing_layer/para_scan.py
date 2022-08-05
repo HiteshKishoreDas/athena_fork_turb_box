@@ -28,10 +28,10 @@ T_cold    = 2*T_floor                   # For cold gas mass calculation
 T_cut_mul = 0.5                         # For cooling cutoff
 T_cut     = T_cut_mul*T_hot             # For cooling cutoff
 
-amb_rho   = np.array([1.0,0.01])                           # Density of the ambient medium
+amb_rho   = np.array([10.0, 1.0, 0.1, 0.01, 0.001])                           # Density of the ambient medium
 
 # Pressure floor
-P_floor = 5*1e-4
+P_floor = 5*1e-4*np.array(amb_rho/1.0)
 
 # Chemical composition
 Xsol = 1.0;
@@ -51,6 +51,7 @@ mH  = 1.0
 R_lsh = np.array([2500])
 
 t_cool_cloud = cf.tcool_calc(amb_rho*chi_cold,T_floor,Z)
+t_cool_floor = cf.tcool_calc(amb_rho,T_floor,Z)
 t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(chi_cold),np.sqrt(T_floor*T_hot),Z)
 t_cool_amb   = cf.tcool_calc(amb_rho,T_hot,Z)
 t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot,Z)
@@ -59,6 +60,9 @@ t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot,Z)
 amb_rho_fix = 1.0
 t_cool_cloud_fix = cf.tcool_calc(amb_rho_fix*chi_cold,T_floor,Z)
 l_sh = vt.cs_calc(T_floor,mu)*t_cool_cloud_fix
+
+cs_hot  = vt.cs_calc(T_floor, mu)
+cs_cold = vt.cs_calc(T_hot, mu)
 
 cloud_radius = R_lsh*l_sh
 

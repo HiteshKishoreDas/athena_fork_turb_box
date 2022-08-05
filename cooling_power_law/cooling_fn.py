@@ -16,7 +16,7 @@ repo_abs_path = cwd[:-len(cwd.split('/')[-1])]
 
 cooling_dir = repo_abs_path+'cooling_power_law/'
 
-def Lam_fn (T,Z=0.0):
+def Lam_fn (T,Z=1.0, Lambda_fac = 1.0):
 
     Lam_file = np.loadtxt(cooling_dir+"CT_WSS09.dat")
     
@@ -56,9 +56,9 @@ def Lam_fn (T,Z=0.0):
         LamH = LamH_a*(T_b-T)/dT + LamH_b*(T-T_a)/dT
         LamZ = LamZ_a*(T_b-T)/dT + LamZ_b*(T-T_a)/dT
 
-    return LamH + LamZ*Z
+    return (LamH + LamZ*Z) * Lambda_fac
 
-def Lam_fn_powerlaw(T):
+def Lam_fn_powerlaw(T, Lambda_fac=1.0):
 
     Lam_file = np.loadtxt(cooling_dir+"power_law_fit_Z_1.0.txt")
     
@@ -89,7 +89,7 @@ def Lam_fn_powerlaw(T):
 
         Lam = Lam_file[i_a,1]* (T/Lam_file[i_a,0])**Lam_file[i_a,2]
 
-        return Lam
+        return Lam*Lambda_fac
 
 def Lam_range():
 
@@ -101,14 +101,14 @@ def Lam_range():
     return T_min, T_max
 
 
-def tcool_calc(rho,T,Z=0.0,actual_flag=False):
+def tcool_calc(rho,T,Z=0.0, Lambda_fac = 1.0,actual_flag=False):
 
     n_H = rho*un.unit_density/(un.muH*un.CONST_amu)
 
     if actual_flag:
-        lam_arr = Lam_fn(T,Z)
+        lam_arr = Lam_fn(T,Z,Lambda_fac)
     else:
-        lam_arr = Lam_fn_powerlaw(T)
+        lam_arr = Lam_fn_powerlaw(T,Lambda_fac)
 
     p = rho*T/(un.KELVIN*un.mu)  # in code units
 

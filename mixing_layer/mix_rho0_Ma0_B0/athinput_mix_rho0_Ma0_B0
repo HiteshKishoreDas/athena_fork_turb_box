@@ -46,8 +46,8 @@ ix2_bc     = periodic   # inner-X2 boundary flag
 ox2_bc     = periodic   # outer-X2 boundary flag
 
 nx3        = 640        # Number of zones in X3-direction
-x3min      = -0.008611064334512204      # minimum value of X3
-x3max      = 0.03444425733804881      # maximum value of X3
+x3min      = -0.021527660836280507      # minimum value of X3
+x3max      = 0.021527660836280507      # maximum value of X3
 ix3_bc     = outflow    # inner-X3 boundary flag
 ox3_bc     = outflow    # outer-X3 boundary flag
 
@@ -60,7 +60,7 @@ nx3        = 32
 
 <hydro>
 gamma     = 1.666666666667 # gamma = C_p/C_v
-pfloor    = 0.0005
+pfloor    = 0.005
 
 # User-defined variables:
 <problem>
@@ -69,7 +69,7 @@ cloud_flag   = 0
 
 cooling_flag = 1                # 0 for no cooling and >0 for cooling
 
-amb_rho      = 1.0      # Density of the ambient medium
+amb_rho      = 10.0      # Density of the ambient medium
 
 front_thickness = 0.00010763830418140253  # thickness of the interface
 v_shear         = 0.1554316959978925   # Shear velocity
@@ -87,6 +87,6 @@ T_cut_mul    = 0.5  # T_cut = T_hot * T_cut_mul
 Xsol            = 1.0     # H-abundance in solar abundance
 Zsol            = 1.0     # Metallicity in solar abundance 
 
-B_x          = 1.5544309763921431     # Magnetic field in x-direction
+B_x          = 4.915542350918595     # Magnetic field in x-direction
 B_y          = 0.0     # Magnetic field in y-direction
 B_z          = 0.0     # Magnetic field in z-direction

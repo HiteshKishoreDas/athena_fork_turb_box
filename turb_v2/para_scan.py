@@ -155,7 +155,7 @@ rst_dt_trb_arr = tlim_trb/rst_dt_N
 rst_dt_cld_arr = tlim_cld/(rst_dt_N * (tlim_cld-tlim_trb)/tlim_trb).astype(int)
 
 # ratio of shear component
-f_shear = 0.0 # 0.3
+f_shear = 0.3
 
 # rseed
 rseed = 1
@@ -171,7 +171,7 @@ cloud_time   = 7*t_eddy
 # beta_list = np.array([1,2,5,10,100,1000])
 # beta_list = np.array([2])
 
-beta_list = 0.1 #100
+beta_list = 100
 
 if B_flag:
 
@@ -225,9 +225,9 @@ t_cc = np.sqrt(cloud_chi)*cloud_radius/v_turb_predict
 def filename_turb_add (i,j):
 
     if B_flag:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
+        return f'_comp_fshear_{f_shear}_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
     else:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
+        return f'_comp_fshear_{f_shear}_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
 
 def filename_cloud_add (i,j):
 

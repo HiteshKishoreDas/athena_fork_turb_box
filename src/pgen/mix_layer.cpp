@@ -96,7 +96,7 @@ static Real B_y = 0.0;
 static Real B_z = 1.0;
 
 static bool cooling_flag_print_count = false;
-
+static bool DEBUG_FLAG = false;
 
 
 void read_input (ParameterInput *pin){
@@ -138,6 +138,9 @@ void read_input (ParameterInput *pin){
   mue = 2.0/(1.0+X);
   muH = 1.0/X;
 
+  Lambda_fac = pin->GetReal("problem","Lambda_fac");
+  DEBUG_FLAG = pin->GetReal("problem","DEBUG_FLAG");
+
   if (MAGNETIC_FIELDS_ENABLED) {
     B_x = pin->GetReal("problem", "B_x");
     B_y = pin->GetReal("problem", "B_y");
@@ -160,67 +163,104 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real sim_time = pmb->pmy_mesh->time;
 
-  // printf("Inside cooling function stuff!\n");
-
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
 
         Real temp = (prim(IPR,k,j,i) / cons(IDN,k,j,i)) * KELVIN * mu ;
 
+        //TODO: Move NaN checks to Cooling header file
+        if (std::isnan(temp)) {
+
+          printf("[cooling] nan detected for T at i,j,k : (%d, %d, %d) \n", i,j,k); 
+          printf("temp = %lf \n", temp ); 
+          printf("rho  = %lf \n", cons(IDN,k,j,i)); 
+          printf("IM1  = %lf \n", cons(IM1,k,j,i)); 
+          printf("IM2  = %lf \n", cons(IM2,k,j,i)); 
+          printf("IM3  = %lf \n", cons(IM3,k,j,i)); 
+
+          Real E_kin = cons(IM1,k,j,i)*cons(IM1,k,j,i);
+          E_kin     += cons(IM2,k,j,i)*cons(IM2,k,j,i);
+          E_kin     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
+          E_kin     /= 2*cons(IDN,k,j,i);
+
+          Real E_mag = 0.0;
+
+          if (MAGNETIC_FIELDS_ENABLED) {
+            E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
+            E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
+            E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
+            E_mag *= 0.5;
+          }
+
+          // Set current temperature to T_floor
+          cons(IEN,k,j,i) = E_kin + E_mag + (T_floor/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+          continue; 
+
+        } // End of NaN check on current temperature
+
         if (temp > T_floor) {
 
-            //* For own townsend cooling
+          //* For own townsend cooling
 
-            // Real *lam_para = Lam_file_read(temp);
+          // Real *lam_para = Lam_file_read(temp);
+          //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
+          // Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
+          //                         prim(IDN,k,j,i), dt, 
+          //                         mu, mue, muH, 
+          //                         g, T_floor, T_ceil, T_cut);
+          // Defined in ../utils/townsend_cooling.hpp
+          //  NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
+          //  calculation of T_new as we calculate (dt/tcool)
+          // cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+          
+          //* For Max's townsend cooling
 
-            //printf("%f %f %f\n",lam_para[0],lam_para[1],lam_para[2]);
+          if (temp<T_cut){
+            Real rho      = cons(IDN,k,j,i);
+            Real temp_cgs = temp;
+            Real rho_cgs  = rho * unit_density;
+            Real dt_cgs   = dt  * unit_time;
+            Real cLfac    = Lambda_fac;
 
-            // Real temp_new = T_new(temp, lam_para[0], lam_para[1], lam_para[2],
-            //                         prim(IDN,k,j,i), dt, 
-            //                         mu, mue, muH, 
-            //                         g, T_floor, T_ceil, T_cut);
+            Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, cLfac), T_floor);
 
-                            // Defined in ../utils/townsend_cooling.hpp
+            if  (std::isnan(temp_new)) {
 
-            //  NOTE: Above, dt is in code units to avoid overflow. unit_time is cancelled in 
-            //  calculation of T_new as we calculate (dt/tcool)
+              printf("[cooling] nan detected for T_new at i,j,k : (%d, %d, %d) \n", i,j,k); 
+              printf("temp = %lf \n", temp_cgs ); 
+              printf("rho  = %lf \n", rho); 
+              printf("IM1  = %lf \n", cons(IM1,k,j,i)); 
+              printf("IM2  = %lf \n", cons(IM2,k,j,i)); 
+              printf("IM3  = %lf \n", cons(IM3,k,j,i)); 
 
-            // cons(IEN,k,j,i) += ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
+              // temp_new set to T_floor
+              Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
+              cons(IEN,k,j,i) += ccool;
+
+            } //* End of NaN check
             
-            //* For Max's townsend cooling
-
-            if (temp<T_cut){
-              Real rho      = cons(IDN,k,j,i);
-              Real temp_cgs = temp;
-              Real rho_cgs  = rho * unit_density;
-              Real dt_cgs   = dt  * unit_time;
-              Real cLfac    = 1.0;
-
-              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
-
+            else {
+            
               Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
+              //TODO: Check the volume check with homogenous box
+              //TODO: Put a test with ccool = 1
+
               cons(IEN,k,j,i) += ccool;
-              total_cooling -= ccool;
-            }
+              
+              if (DEBUG_FLAG){
+                total_cooling -= 1.0;
+              }
+              else{
+                total_cooling -= ccool;
+              }
 
 
-            //*_____________________________
-            
+            } // End of else for NaN check
 
-
-            // ________________________________
-            // FOR DEBUG PURPOSES
-            // if ((temp>T_cut) && ((temp_new-temp)!=0.0)){
-
-                // printf("T, delT: %lf %.60lf\n", temp, temp_new-temp);
-            // }
-            // ________________________________
-
-
-          
-        }
+          } // End of T<T_cut check
+        } // End of T>T_floor check
 
         else{  // If T<=T_floor
 
@@ -228,13 +268,13 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
           Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
           cons(IEN,k,j,i) += ccool;
-          total_cooling -= ccool;
+          // total_cooling -= ccool;
 
-        }
+        } // End of else, T<=T_floor
 
       }
     }
-  }
+  } // End of loop over Meshblock
 
   return;
 }
@@ -448,7 +488,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
     for(int j=js; j<=je; j++) {
       for(int i=is; i<=ie; i++) {
 
-        Real lum_cell = 0;
+        Real lum_cell = 0.0;
         Real temp = (phydro->u(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
 
         if (temp > T_floor) {
@@ -464,9 +504,9 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 
               Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
 
-              Real ccool = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+              Real ccool_2 = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
 
-              lum_cell-= ccool;
+              lum_cell-= ccool_2;
             }
 
             //*_____________________________

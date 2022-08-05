@@ -87,11 +87,7 @@ if __name__=="__main__":
 
     N_bin = 5
     bin_n = 100
-<<<<<<< HEAD
     Z = 1.0 # Solar metallicity
-=======
-    Z = 1.0
->>>>>>> 1daa4648571309fd04896903f202b61782fa0589
 
     T_arr = np.logspace(np.log10(T_min),np.log10(T_max),num=N_bin*bin_n)
     T_arr[0] = T_min
