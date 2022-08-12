@@ -65,6 +65,8 @@ pfloor    = !!P_FLOOR!!
 # User-defined variables:
 <problem>
 
+DEBUG_FLAG = 0 
+
 cloud_flag   = 0
 
 cooling_flag = 1                # 0 for no cooling and >0 for cooling

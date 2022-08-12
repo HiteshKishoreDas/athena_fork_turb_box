@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+(cd ../../../ && ./configure.py --prob turb_test -b -fft -mpi -hdf5 -h5double)

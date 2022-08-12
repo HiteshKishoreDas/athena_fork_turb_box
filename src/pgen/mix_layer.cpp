@@ -49,7 +49,7 @@ using namespace std;
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
 static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
-static Real total_cooling;
+static Real total_cooling=0.0;
 
 // Returns unique pointer
 // This is a function in C++13 onwards
@@ -96,8 +96,8 @@ static Real B_y = 0.0;
 static Real B_z = 1.0;
 
 static bool cooling_flag_print_count = false;
-static bool DEBUG_FLAG = false;
-
+static bool DEBUG_FLAG_MIX = false;
+static Real debug_hst = 0.0;
 
 void read_input (ParameterInput *pin){
   /*
@@ -138,8 +138,8 @@ void read_input (ParameterInput *pin){
   mue = 2.0/(1.0+X);
   muH = 1.0/X;
 
-  Lambda_fac = pin->GetReal("problem","Lambda_fac");
-  DEBUG_FLAG = pin->GetReal("problem","DEBUG_FLAG");
+  Lambda_fac     = pin->GetReal("problem","Lambda_fac");
+  DEBUG_FLAG_MIX = pin->GetBoolean("problem","DEBUG_FLAG");
 
   if (MAGNETIC_FIELDS_ENABLED) {
     B_x = pin->GetReal("problem", "B_x");
@@ -166,6 +166,8 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
+
+        debug_hst += 1.0;
 
         Real temp = (prim(IPR,k,j,i) / cons(IDN,k,j,i)) * KELVIN * mu ;
 
@@ -249,7 +251,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
               cons(IEN,k,j,i) += ccool;
               
-              if (DEBUG_FLAG){
+              if (DEBUG_FLAG_MIX){
                 total_cooling -= 1.0;
               }
               else{
@@ -287,6 +289,12 @@ Real hst_total_cooling(MeshBlock *pmb, int iout) {
     return 0;
 }
 
+Real hst_debug(MeshBlock *pmb, int iout) {
+  if(pmb->lid == 0)
+    return debug_hst;
+  else
+    return 0;
+}
 
 void Source(MeshBlock *pmb, const Real time, const Real dt,
              const AthenaArray<Real> &prim, const AthenaArray<Real> &prim_scalar,
@@ -338,7 +346,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(10);
+    AllocateUserHistoryOutput(11);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -350,16 +358,18 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
     EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(10, hst_debug, "total_debug");
   }
   else {
 
-    AllocateUserHistoryOutput(5);
+    AllocateUserHistoryOutput(6);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(5, hst_debug, "total_debug");
 
   }
 
@@ -515,8 +525,8 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 
         else{  // If T<=T_floor
 
-          Real ccool = ((T_floor-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1); 
-          lum_cell-= ccool;
+          Real ccool_2 = ((T_floor-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1); 
+          lum_cell-= ccool_2;
 
         }
         

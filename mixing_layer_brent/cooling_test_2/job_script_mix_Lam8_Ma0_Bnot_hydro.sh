@@ -26,8 +26,8 @@ module list
 
 cd /ptmp/mpa/hitesh/athena_fork_turb_box/mixing_layer_brent/cooling_test_2/
 
-srun ./athena_mix -i athinput_mix_Lam8_Ma0_Bnot_hydro -t 23:52:00
-# srun ./athena -r Turb.final.rst -t 00:25:00
+# srun ./athena_mix -i athinput_mix_Lam8_Ma0_Bnot_hydro -t 23:52:00
+srun ./athena_mix -r Turb.final.rst -t 23:25:00
 
 echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
 

@@ -37,8 +37,11 @@ def lum_fn(hst):
 
     box_volume = ps.box_length*ps.box_width*ps.box_width
     dz = (ps.box_length[0]/ps.nx3[0])
+    dy = (ps.box_width[0] /ps.nx2[0])
+    dx = (ps.box_width[0] /ps.nx1[0])
 
-    luminosity = (dcool/dt)[1:-1] * dz
+    luminosity  = (dcool/dt)[1:-1] * dx * dy * dz
+    luminosity /= (ps.box_width[0] * ps.box_width[0])
     time       = time[1:-1]
 
     return time, luminosity
@@ -60,7 +63,9 @@ for j in range(len(ps.Ma)):
 
         #* Damkohler number calculation
         # v_turb in km/s
-        u    =  50 * (ps.M**(4/5)) * ( (ps.cs_cold*g.unit_velocity/(15*1e5))**(4/5) ) * ((ps.t_cool_cloud[i]/0.03)**-0.1)
+        u  =  50 * (ps.M**(4/5))
+        u *=  ( ps.cs_cold*g.unit_velocity/(15*1e5) )**0.8 
+        u *=  ( ps.t_cool_cloud[i]/0.03 )**-0.1
 
         # tcool_tKH = np.round(ps.t_cool_mix[i]/ps.t_KH[0], 4)
 
@@ -70,7 +75,7 @@ for j in range(len(ps.Ma)):
         Da = t_turb/t_cool
 
 
-        Da_cut = 0.2 
+        Da_cut = 2 
 
         #* For strong cooling line
         p_e_strong= 1
@@ -101,8 +106,6 @@ for j in range(len(ps.Ma)):
         t_term_strong = (ps.t_cool_cloud[i]/0.03)**t_e_strong
         t_term_weak   = (ps.t_cool_cloud[i]/0.03)**t_e_weak
 
-        # print('__________________________')
-
         Q_strong = Q0 
         Q_strong *= P_term_strong 
         Q_strong *= u_term_strong 
@@ -125,6 +128,7 @@ for j in range(len(ps.Ma)):
         file_add = ps.filename_mix_add_ext(i,j,0,False)
         dir_name = f'mix{file_add}'
         
+        # hst = hr.hst_data(f'test_1/{dir_name}/Turb.hst', ncells, False)
         try:
             hst = hr.hst_data(f'{dir_name}/Turb.hst', ncells, False)
             print(f'{dir_name} read ...')
@@ -137,15 +141,15 @@ for j in range(len(ps.Ma)):
         Da_list.append(Da)
 
         time, luminosity = lum_fn(hst)
-        L_avg = np.average(luminosity[-50:])
+        L_avg = np.average(luminosity[-250:-150])
 
         print(f'L_avg: {L_avg}')
         L_avg_list.append(L_avg)
 
         if Da<2:
-            L_scaled_list.append(L_avg/1e3)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
+            L_scaled_list.append(L_avg)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
         else:
-            L_scaled_list.append(L_avg/1e3)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong/1e4)
+            L_scaled_list.append(L_avg)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong/1e4)
 
         Q_strong_scaled_list.append(Q_strong)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong)
         Q_weak_scaled_list.append(Q_weak)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)

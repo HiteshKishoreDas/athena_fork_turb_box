@@ -54,16 +54,16 @@ Cooling::Cooling() {
   cool_index.NewAthenaArray(nbins);
 
   // Temperatures in [K]
-  cool_t(0) = 10000.0;
-  cool_t(1) = 12600.0;
-  cool_t(2) = 15890.0;
-  cool_t(3) = 20020.0;
-  cool_t(4) = 25240.0;
-  cool_t(5) = 31810.0;
-  cool_t(6) = 40090.0;
-  cool_t(7) = 50530.0;
-  cool_t(8) = 63680.0;
-  cool_t(9) = 80260.0;
+  cool_t(0)  = 10000.0;
+  cool_t(1)  = 12600.0;
+  cool_t(2)  = 15890.0;
+  cool_t(3)  = 20020.0;
+  cool_t(4)  = 25240.0;
+  cool_t(5)  = 31810.0;
+  cool_t(6)  = 40090.0;
+  cool_t(7)  = 50530.0;
+  cool_t(8)  = 63680.0;
+  cool_t(9)  = 80260.0;
   cool_t(10) = 101200.0;
   cool_t(11) = 127500.0;
   cool_t(12) = 160700.0;
