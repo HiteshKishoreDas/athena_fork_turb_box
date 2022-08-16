@@ -16,9 +16,11 @@ def jobscript_turb_new(i, j,template='template_dir/job_script_turb_template.sh')
         template_data = file.read()
 
     if ps.B_flag:
-        job_name = f'mhd{i}{j}_{ps.rseed}'
+        # job_name = f'm{i}{j}{ps.rseed}'
+        job_name = f'm{i}{ps.rseed}{ps.M}'
     else:
-        job_name = f'hyd{i}{j}_{ps.rseed}'
+        # job_name = f'h{i}{j}{ps.rseed}'
+        job_name = f'h{i}{ps.rseed}{ps.M}'
     
     work_dir = ps.parent_dir+f'/para_scan'+ps.filename_turb_add(i,j)+'/'
     input_file = f'athinput_turb'+ps.filename_turb_add(i,j)+'.turb'

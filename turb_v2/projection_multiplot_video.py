@@ -21,7 +21,7 @@ def filename(N):
 
 N = 501
 
-for N in range(501,566):
+for N in range(501,601):
 
     print(f"Processing file {N}...")
 
@@ -32,8 +32,8 @@ for N in range(501,566):
     Rlsh_i = 0 
     t_eddy = t_eddy[Rlsh_i]
 
-    fn_hyd = f"para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_hydro/Turb.out2.{str(N).zfill(5)}.athdf"
-    fn_mhd = f"para_scan_Rlsh0_100_res0_128_rseed_1_M_0.5_chi_100_beta_100/Turb.out2.{str(N).zfill(5)}.athdf"
+    fn_hyd = f"para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_chi_100_hydro/Turb.out2.{str(N).zfill(5)}.athdf"
+    fn_mhd = f"para_scan_Rlsh5_1000_res0_256_rseed_1_M_0.5_chi_100_beta_100/Turb.out2.{str(N).zfill(5)}.athdf"
 
 
     fns = [fn_hyd, fn_mhd]
@@ -71,8 +71,8 @@ for N in range(501,566):
 
         # Ensure the colorbar limits match for all plots
         # p.set_zlim(("gas", "density"), 1e0, 1e1)
-        p.set_zlim(("gas", "density"), 1e5, 1e6)
-        # p.set_zlim(("gas", "density"), 1e6, 1e7)
+        # p.set_zlim(("gas", "density"), 1e5, 1e6)
+        p.set_zlim(("gas", "density"), 1e6, 1e7)
 
         p.annotate_title(f"{fn_title[i]}") #: {round(float(ds.current_time)/t_eddy - 7, 3)} "+r"t$_{\rm eddy}$")    
 
@@ -90,7 +90,8 @@ for N in range(501,566):
         p._setup_plots()
 
     # p.show()
-    p.save(f"Plots/density_destroy/density_proj_{str(N).zfill(5)}.png")
+    # p.save(f"Plots/density_destroy/density_proj_{str(N).zfill(5)}.png")
+    p.save(f"Plots/density_survive/density_proj_{str(N).zfill(5)}.png")
     # plt.close()
 
 print("Done!")

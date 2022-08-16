@@ -52,8 +52,8 @@ mue = 2.0/(1.0+X)
 muH = 1.0/X
 mH  = 1.0
 
-# R_lsh = np.array([5,10,50,250,500])         # For M = 0.25
-R_lsh = np.array([10,50,100,250,500,1000])     # For M = 0.5
+R_lsh = np.array([5,10,50,250,500])         # For M = 0.25
+# R_lsh = np.array([10,50,100,250,500,1000])     # For M = 0.5
 # R_lsh = np.array([250,500,1000,2500,5000])  # For M = 0.9
 
 t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z)
@@ -83,7 +83,7 @@ B_flag       = 1  # 1 for adding magnetic fields
 
 Mach_arr = np.array([0.25, 0.5, 0.9])
 
-M = 0.5     # Required Mach number
+M = 0.25    # Required Mach number
 i_mach = np.argwhere(Mach_arr==M)[0][0]
 
 
@@ -110,12 +110,12 @@ x3max = L_box/2
 x3min = -1*x3max
 
 # Number of cells
-nx1 = np.array([128]) # np.array([256])
-nx2 = np.array([128]) # np.array([256])
-nx3 = np.array([128]) # np.array([256])
+nx1 = np.array([256])
+nx2 = np.array([256])
+nx3 = np.array([256])
 
-nx1_mesh = np.array([32])
-nx2_mesh = np.array([32])
+nx1_mesh = np.array([16])
+nx2_mesh = np.array([16])
 nx3_mesh = np.array([32])
 
 # predicted turbulent velocity
@@ -195,14 +195,15 @@ else:
 
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
-cluster_name = "freya"
+cluster_name = "cobra"
 
 if cluster_name=="freya":
     dir_path_add = "mpa/"
 else:
     dir_path_add = ""
 
-queue = "p.24h" #"medium" # "n0064"
+# queue = "p.24h" #"medium" # "n0064"
+queue = "n0064"
 ntasks_per_node = 32
 
 nodes = (n_cores/ntasks_per_node).astype(int)
@@ -225,20 +226,20 @@ t_cc = np.sqrt(cloud_chi)*cloud_radius/v_turb_predict
 def filename_turb_add (i,j):
 
     if B_flag:
-        return f'_comp_fshear_{f_shear}_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
     else:
-        return f'_comp_fshear_{f_shear}_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
 
 def filename_cloud_add (i,j):
 
     if B_flag:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_beta_{beta_list}'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_beta_{beta_list}'
     else:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_hydro'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_chi_{cloud_chi}_hydro'
 
 def filename_cloud_func (i,j,rseed,Mach,cloud_chi,beta,MHD_flag):
 
     if MHD_flag:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_beta_{beta}'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_beta_{beta}'
     else:
-        return f'_comp_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_hydro'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{Mach}_chi_{cloud_chi}_hydro'

@@ -7,14 +7,19 @@ from globals import *
 
 MHD_list = [True, False]
 
-M_list = [0.25, 0.5, 0.9]
+# M_list = [0.25, 0.5, 0.9]
+M_list = [0.5]
 
 for M in M_list:
     for mhd in MHD_list:
         # for i in range(len(ps.R_lsh)):
         for i in range(len(ps.R_lsh)): 
 
-            fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=M,cloud_chi=100,beta=100,MHD_flag=mhd)
+            # fn_suffix = ps.filename_cloud_func(i,j=0,rseed=1,Mach=M,cloud_chi=100,beta=100,MHD_flag=mhd)
+            if mhd:
+                fn_suffix = f'_Rlsh{i}_{ps.R_lsh[i]}_res0_256_rseed_1_M_{M}_chi_100_beta_100'
+            else:
+                fn_suffix = f'_Rlsh{i}_{ps.R_lsh[i]}_res0_256_rseed_1_M_{M}_chi_100_hydro'
 
             cold_gas = []
             time = []

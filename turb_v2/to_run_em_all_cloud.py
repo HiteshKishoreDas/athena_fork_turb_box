@@ -20,16 +20,18 @@ def job_list_read(filename):
                 end = True
                 break
             # print(l)
-            job_list.append([l.split(" ")[0], l.split(" ")[1][:3], l.split(" ")[1][3:4], l.split(" ")[1][4:5], l.split(" ")[1][6:7]])
+            job_list.append([l.split(" ")[0], l.split(" ")[1][0:1], l.split(" ")[1][1:2], 0, l.split(" ")[1][2:3], l.split(" ")[1][3:]])
 
     return job_list
 
 def job_id (job_list,i,j, B_flag):
 
     if B_flag:
-        mhd = 'mhd'
+        # mhd = 'mhd'
+        mhd = 'm'
     else:
-        mhd = 'hyd'
+        # mhd = 'hyd'
+        mhd = 'h'
 
     for job in job_list:
         if (job[1]==mhd):
@@ -40,17 +42,17 @@ def job_id (job_list,i,j, B_flag):
 
     return -1    
 
-job_list = job_list_read("job_list/M_0.5_job_list")
+job_list = job_list_read("job_list/M_0.25_job_list")
         
 
 # for i in [4]:#range(np.size(R_lsh)):
-for i in [0,1]: #range(np.size(R_lsh)):
+for i in range(np.size(R_lsh)):
     for j in range(np.size(nx1)):
         
         turb_job_id = job_id(job_list, i, j, B_flag)
 
-        # if turb_job_id==-1:
-            # continue
+        if turb_job_id==-1:
+            continue
 
         ## os.system('source ../load_module')
         os.system(f'cp -r template_dir para_scan'+filename_cloud_add(i,j))
@@ -77,8 +79,9 @@ for i in [0,1]: #range(np.size(R_lsh)):
             os.system(f'(cd para_scan{filename_cloud_add(i,j)} && ./turb_compile_freya)')
             # os.system(f'(cd para_scan{filename_add(i,j)} && ./turb_compile)')
 
-        # os.system(f'(cd para_scan{filename_cloud_add(i,j)} && sbatch --dependency=afterok:{turb_job_id} job_script_cloud{filename_cloud_add(i,j)}.sh)')
-        os.system(f'(cd para_scan{filename_cloud_add(i,j)} && sbatch job_script_cloud{filename_cloud_add(i,j)}.sh)')
+        os.system(f'(cd para_scan{filename_cloud_add(i,j)} && sbatch --dependency=afterok:{turb_job_id} job_script_cloud{filename_cloud_add(i,j)}.sh)')
+        # os.system(f'(cd para_scan{filename_cloud_add(i,j)} && sbatch job_script_cloud{filename_cloud_add(i,j)}.sh)')
+
         # os.system(f'(cd para_scan{filename_add(i,j)} && ./turb_run athinput{filename_add(i,j)}.turb 2)')
 
         print("_________________________________________________")
