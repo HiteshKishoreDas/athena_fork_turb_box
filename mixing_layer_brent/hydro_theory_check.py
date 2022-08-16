@@ -58,7 +58,7 @@ Q_strong_scaled_list = []
 Q_weak_scaled_list   = []
 
 for j in range(len(ps.Ma)):
-    for i in range(len(ps.Lambda_fac)):
+    for i in range(len(ps.Lambda_fac)-2):
 
 
         #* Damkohler number calculation
