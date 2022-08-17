@@ -72,7 +72,7 @@ cs_cold = vt.cs_calc(T_hot, mu)
 cloud_radius = R_lsh*l_sh
 
 box_width  = np.array([0.1])  # 0.1 kpc = 100 pc # cloud_radius*2
-box_length = np.array([0.3])  # 0.3 kpc = 300 pc # box_width*10
+box_length = np.array([0.6])  # 0.3 kpc = 300 pc # box_width*10
 
 # Cooling flag
 cooling_flag = 1  # 1 for cooling and 0 for no cooling
@@ -97,17 +97,17 @@ x1min = np.array([0.0])
 x2max = box_width
 x2min = np.array([0.0])
 
-x3max = box_length* 2/3  # 0.8
+x3max = box_length* 5/6  # 0.8
 x3min = x3max - box_length
 
 # Number of cells
 nx1 = np.array([64 ])
 nx2 = np.array([64 ])
-nx3 = np.array([640])
+nx3 = np.array([1280])
 
 nx1_mesh = np.array([32])
 nx2_mesh = np.array([32])
-nx3_mesh = np.array([32])
+nx3_mesh = np.array([64])
 
 # Initial profile settings 
 
@@ -176,7 +176,7 @@ if B_flag:
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
 queue = "p.24h"
-ntasks_per_node = 32
+ntasks_per_node = 40
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 

@@ -508,11 +508,11 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
             if (temp<T_cut){
               Real rho      = phydro->u(IDN,k,j,i);
               Real temp_cgs = temp;
-              Real rho_cgs  = rho * unit_density;
-              Real dt_cgs   = pmy_mesh->dt * unit_time;
-              Real cLfac    = 1.0;
+              Real rho_cgs  = rho *1.0a_fac;
 
-              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, 1.0), T_floor);
+              // ! CHANGE THE ABOVE TO CORRECT VALUE
+
+              Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, cLfac), T_floor);
 
               Real ccool_2 = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
 

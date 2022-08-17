@@ -18,17 +18,17 @@ ncells = 64*64*640
 def lum_fn(hst):
 
     #* Copied cumulative cooling data
-    tot_cool = np.copy(hst.total_cooling)
+    tot_cool = np.copy(hst.total_cooling)[:300]
 
     dcool = np.roll(tot_cool, -1) - tot_cool
-    dt    = np.roll(hst.time, -1) - hst.time
+    dt    = np.roll(hst.time[:300], -1) - hst.time[:300]
     # time  = hst.time
 
-    dcool = dcool   [hst.cold_gas_fraction>0.1]
-    dt    = dt      [hst.cold_gas_fraction>0.1]
-    time  = hst.time[hst.cold_gas_fraction>0.1]
+    dcool = dcool   [hst.cold_gas_fraction[:300]>0.1]
+    dt    = dt      [hst.cold_gas_fraction[:300]>0.1]
+    time  = (hst.time[:300])[hst.cold_gas_fraction[:300]>0.1]
 
-    box_full = np.argwhere(hst.cold_gas_fraction>0.998)
+    box_full = np.argwhere(hst.cold_gas_fraction[:300]>0.998)
 
     if len(box_full)!=0:
         dcool = dcool   [:np.min(box_full)]
@@ -141,7 +141,7 @@ for j in range(len(ps.Ma)):
         Da_list.append(Da)
 
         time, luminosity = lum_fn(hst)
-        L_avg = np.average(luminosity[-250:-150])
+        L_avg = np.average(luminosity[-150:])
 
         print(f'L_avg: {L_avg}')
         L_avg_list.append(L_avg)

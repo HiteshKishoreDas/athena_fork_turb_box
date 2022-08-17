@@ -22,31 +22,34 @@ legend_list = ['B_x'    , 'B_y'       , 'B_z'      , 'hydro'   ]
 def lum_fn(hst):
 
     #* Copied cumulative cooling data
-    tot_cool = np.copy(hst.total_cooling)
+    tot_cool = np.copy(hst.total_cooling)[:300]
 
     dcool = np.roll(tot_cool, -1) - tot_cool
-    dt    = np.roll(hst.time, -1) - hst.time
-    time  = hst.time
+    dt    = np.roll(hst.time[:300], -1) - hst.time[:300]
+    # time  = hst.time
 
-    dcool = dcool   [hst.cold_gas_fraction>0.1]
-    dt    = dt      [hst.cold_gas_fraction>0.1]
-    time  = hst.time[hst.cold_gas_fraction>0.1]
+    dcool = dcool   [hst.cold_gas_fraction[:300]>0.1]
+    dt    = dt      [hst.cold_gas_fraction[:300]>0.1]
+    time  = (hst.time[:300])[hst.cold_gas_fraction[:300]>0.1]
 
-    box_full = np.argwhere(hst.cold_gas_fraction>0.998)
+    box_full = np.argwhere(hst.cold_gas_fraction[:300]>0.998)
 
     if len(box_full)!=0:
         dcool = dcool   [:np.min(box_full)]
         dt    = dt      [:np.min(box_full)]
         time  = hst.time[:np.min(box_full)]
 
+    box_volume = ps.box_length*ps.box_width*ps.box_width
+    dz = (ps.box_length[0]/ps.nx3[0])
+    dy = (ps.box_width[0] /ps.nx2[0])
+    dx = (ps.box_width[0] /ps.nx1[0])
 
-    luminosity = (dcool/dt)[1:-1] 
-    luminosity *= ps.box_length[0]/(ps.nx1[0] * ps.nx2[0] * ps.nx3[0]  )
+    luminosity  = (dcool/dt)[1:-1] * dx * dy * dz
+    luminosity /= (ps.box_width[0] * ps.box_width[0])
     time       = time[1:-1]
 
     return time, luminosity
-    # return range(len(hst.time)), tot_cool
-
+    # return hst.time, tot_cool 
 
 
 # fig, ax = plt.subplots(nrows=2, ncols=2, figsize = (20,25))
@@ -97,7 +100,7 @@ for i in range(len(ps.Lambda_fac)):
 
                 if not B_fl:
                     
-                    L_avg = np.average(luminosity[-250:-150])
+                    L_avg = np.average(luminosity[-150:])
                     ax[i].axhline(L_avg, linestyle='dashed')#,\
                           # color=col_list[plot_i],\
                         # label=r'L$_{\rm avg}$'+ f' = {np.round(L_avg,3)}')

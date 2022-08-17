@@ -1,4 +1,3 @@
-from selectors import EpollSelector
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -39,7 +38,7 @@ j = 0
 k = 1
 B_fl = True
 
-for i in range(len(ps.amb_rho)):
+for i in range(len(ps.Lambda_fac)):
     for j in range(len(ps.Ma)):
         for k in range(3):
             for B_fl in [True, False]:
@@ -57,7 +56,7 @@ for i in range(len(ps.amb_rho)):
 
 
 
-                for N in range(201):
+                for N in range(101):
 
                     print(N)
 
@@ -76,7 +75,7 @@ for i in range(len(ps.amb_rho)):
 
                     #* Luminosity
                     plt.figure(figsize=(10,20))
-                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],ds_lum['user_out_var0'][:,32,:])
+                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],np.average(ds_lum['user_out_var0'], axis=1) )
                     plt.title(dir_name)
                     plt.axis('scaled')
                     plt.colorbar()
@@ -88,7 +87,8 @@ for i in range(len(ps.amb_rho)):
 
                     #* Temperature
                     plt.figure(figsize=(10,20))
-                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],T[:,32,:], vmin=np.log10(4e4), vmax = np.log10(4e6))
+                    # plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],T[:,32,:], vmin=np.log10(4e4), vmax = np.log10(4e6))
+                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],np.average(T, axis=1), vmin=np.log10(4e4), vmax = np.log10(4e6))
                     plt.title(dir_name)
                     plt.axis('scaled')
                     plt.colorbar()
@@ -144,10 +144,10 @@ for i in range(len(ps.amb_rho)):
                 for d_c in dir_create_list[1:]:
 
                     if B_fl:
-                        video_command = f'ffmpeg -framerate 5 -i Plots/{dir_name}{d_c}{d_c}_%05d.png Plots/{dir_name}{d_c}{d_c}_m{i}{j}{k}.mp4'
+                        video_command = f'ffmpeg -framerate 5 -i Plots/{dir_name}{d_c}{d_c}_%05d.png -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2, fps=25, format=yuv420p" Plots/{dir_name}{d_c}{d_c}_m{i}{j}{k}.mp4'
                     else:
                         if d_c not in ['/beta','/Bx','/By','/Bz']:
-                            video_command = f'ffmpeg -framerate 5 -i Plots/{dir_name}{d_c}{d_c}_%05d.png Plots/{dir_name}{d_c}{d_c}_h{i}{j}{k}.mp4'
+                            video_command = f'ffmpeg -framerate 5 -i Plots/{dir_name}{d_c}{d_c}_%05d.png -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2, fps=25, format=yuv420p" Plots/{dir_name}{d_c}{d_c}_h{i}{j}{k}.mp4'
                         else:
                             continue
 

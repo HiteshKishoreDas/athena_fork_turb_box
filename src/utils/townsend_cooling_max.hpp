@@ -278,7 +278,7 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
     idx -= 1;
     t_i   = cool_t(idx);
     tef_i = cool_tef(idx);
-    coef  = cool_coef(idx);
+    coef  = cool_coef(idx) * Lambda_fac;  //* Later correction
     slope = cool_index(idx);
   }
 
