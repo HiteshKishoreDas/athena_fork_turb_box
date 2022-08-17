@@ -34,7 +34,7 @@ Lambda_fac = np.array([1e4,5000,1000.0,500.0,100.0, 50.0, 10.0, 5.0, 1.0, 0.5, 0
 # Density of the ambient medium
 
 # Pressure floor
-P_floor = 5*1e-4*np.array(amb_rho/1.0)
+P_floor = 1e-15*np.ones_like(amb_rho)  #5*1e-4*np.array(amb_rho/1.0)
 
 # Chemical composition
 Xsol = 1.0;
@@ -72,7 +72,7 @@ cs_cold = vt.cs_calc(T_hot, mu)
 cloud_radius = R_lsh*l_sh
 
 box_width  = np.array([0.1])  # 0.1 kpc = 100 pc # cloud_radius*2
-box_length = np.array([0.6])  # 0.3 kpc = 300 pc # box_width*10
+box_length = np.array([1.0])  # 0.3 kpc = 300 pc # box_width*10
 
 # Cooling flag
 cooling_flag = 1  # 1 for cooling and 0 for no cooling
@@ -97,17 +97,17 @@ x1min = np.array([0.0])
 x2max = box_width
 x2min = np.array([0.0])
 
-x3max = box_length* 5/6  # 0.8
+x3max = box_length* 9/10  # 0.8
 x3min = x3max - box_length
 
 # Number of cells
 nx1 = np.array([64 ])
 nx2 = np.array([64 ])
-nx3 = np.array([1280])
+nx3 = np.array([640])
 
 nx1_mesh = np.array([32])
 nx2_mesh = np.array([32])
-nx3_mesh = np.array([64])
+nx3_mesh = np.array([32])
 
 # Initial profile settings 
 

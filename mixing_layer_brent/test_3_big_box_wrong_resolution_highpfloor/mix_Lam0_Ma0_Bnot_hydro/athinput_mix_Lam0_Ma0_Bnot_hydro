@@ -45,9 +45,9 @@ x2max      = 0.1        # maximum value of X2
 ix2_bc     = periodic   # inner-X2 boundary flag
 ox2_bc     = periodic   # outer-X2 boundary flag
 
-nx3        = 640        # Number of zones in X3-direction
+nx3        = 1280        # Number of zones in X3-direction
 x3min      = -0.09999999999999998      # minimum value of X3
-x3max      = 0.9      # maximum value of X3
+x3max      = 0.5      # maximum value of X3
 ix3_bc     = outflow    # inner-X3 boundary flag
 ox3_bc     = outflow    # outer-X3 boundary flag
 
@@ -56,11 +56,11 @@ refinement = none
 <meshblock>
 nx1        = 32  
 nx2        = 32 
-nx3        = 32 
+nx3        = 64 
 
 <hydro>
 gamma     = 1.666666666667 # gamma = C_p/C_v
-pfloor    = 1e-15
+pfloor    = 8e-08
 
 # User-defined variables:
 <problem>
