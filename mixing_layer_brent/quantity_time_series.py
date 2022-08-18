@@ -21,18 +21,20 @@ legend_list = ['B_x'    , 'B_y'       , 'B_z'      , 'hydro'   ]
 
 def lum_fn(hst):
 
+    N_last = 2000
+
     #* Copied cumulative cooling data
-    tot_cool = np.copy(hst.total_cooling)[:300]
+    tot_cool = np.copy(hst.total_cooling)[:N_last]
 
     dcool = np.roll(tot_cool, -1) - tot_cool
-    dt    = np.roll(hst.time[:300], -1) - hst.time[:300]
+    dt    = np.roll(hst.time[:N_last], -1) - hst.time[:N_last]
     # time  = hst.time
 
-    dcool = dcool   [hst.cold_gas_fraction[:300]>0.1]
-    dt    = dt      [hst.cold_gas_fraction[:300]>0.1]
-    time  = (hst.time[:300])[hst.cold_gas_fraction[:300]>0.1]
+    dcool = dcool   [hst.cold_gas_fraction[:N_last]>0.1]
+    dt    = dt      [hst.cold_gas_fraction[:N_last]>0.1]
+    time  = (hst.time[:N_last])[hst.cold_gas_fraction[:N_last]>0.1]
 
-    box_full = np.argwhere(hst.cold_gas_fraction[:300]>0.998)
+    box_full = np.argwhere(hst.cold_gas_fraction[:N_last]>0.998)
 
     if len(box_full)!=0:
         dcool = dcool   [:np.min(box_full)]

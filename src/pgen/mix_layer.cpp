@@ -266,7 +266,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
         else{  // If T<=T_floor
 
-          printf("+");
+          // printf("+");
 
           Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
           cons(IEN,k,j,i) += ccool;
@@ -508,7 +508,9 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
             if (temp<T_cut){
               Real rho      = phydro->u(IDN,k,j,i);
               Real temp_cgs = temp;
-              Real rho_cgs  = rho *1.0a_fac;
+              Real rho_cgs  = rho * unit_density;
+              Real dt_cgs   = pmy_mesh->dt * unit_time;
+              Real cLfac    = Lambda_fac;
 
               // ! CHANGE THE ABOVE TO CORRECT VALUE
 

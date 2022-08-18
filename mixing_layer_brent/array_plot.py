@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 
 plt.style.use('../plot_scripts/plot_style.mplstyle')
 
+import cmasher as cmr
+
+
 import sys
 import os
 sys.path.insert(0, '../vis/python')
@@ -31,6 +34,8 @@ def B_analysis(ds):
     return vB_cos, v_dot_B, Ma 
 
 
+cmap = cmr.bubblegum
+
 # N = 10 
 
 i = 0
@@ -41,7 +46,8 @@ B_fl = True
 for i in range(len(ps.Lambda_fac)):
     for j in range(len(ps.Ma)):
         for k in range(3):
-            for B_fl in [True, False]:
+            # for B_fl in [True, False]:
+            for B_fl in [False]:
                 
                 if not(B_fl) and k!=0:
                    continue
@@ -75,7 +81,7 @@ for i in range(len(ps.Lambda_fac)):
 
                     #* Luminosity
                     plt.figure(figsize=(10,20))
-                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],np.average(ds_lum['user_out_var0'], axis=1) )
+                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],np.average(ds_lum['user_out_var0'], axis=1) , cmap=cmap)
                     plt.title(dir_name)
                     plt.axis('scaled')
                     plt.colorbar()
@@ -84,6 +90,8 @@ for i in range(len(ps.Lambda_fac)):
 
                     T = (ds_prm['press']/ds_prm['rho']) * g.KELVIN * g.mu
                     T = np.log10(T)
+
+                    print(f"Min pressure: {np.min(ds_prm['press'])}")
 
                     #* Temperature
                     plt.figure(figsize=(10,20))

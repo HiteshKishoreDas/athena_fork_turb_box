@@ -17,18 +17,20 @@ ncells = 64*64*640
 
 def lum_fn(hst):
 
+    N_last = 2000
+
     #* Copied cumulative cooling data
-    tot_cool = np.copy(hst.total_cooling)[:300]
+    tot_cool = np.copy(hst.total_cooling)[:N_last]
 
     dcool = np.roll(tot_cool, -1) - tot_cool
-    dt    = np.roll(hst.time[:300], -1) - hst.time[:300]
+    dt    = np.roll(hst.time[:N_last], -1) - hst.time[:N_last]
     # time  = hst.time
 
-    dcool = dcool   [hst.cold_gas_fraction[:300]>0.1]
-    dt    = dt      [hst.cold_gas_fraction[:300]>0.1]
-    time  = (hst.time[:300])[hst.cold_gas_fraction[:300]>0.1]
+    dcool = dcool   [hst.cold_gas_fraction[:N_last]>0.1]
+    dt    = dt      [hst.cold_gas_fraction[:N_last]>0.1]
+    time  = (hst.time[:N_last])[hst.cold_gas_fraction[:N_last]>0.1]
 
-    box_full = np.argwhere(hst.cold_gas_fraction[:300]>0.998)
+    box_full = np.argwhere(hst.cold_gas_fraction[:N_last]>0.998)
 
     if len(box_full)!=0:
         dcool = dcool   [:np.min(box_full)]
@@ -58,7 +60,7 @@ Q_strong_scaled_list = []
 Q_weak_scaled_list   = []
 
 for j in range(len(ps.Ma)):
-    for i in range(len(ps.Lambda_fac)-2):
+    for i in range(len(ps.Lambda_fac)):
 
 
         #* Damkohler number calculation
@@ -146,10 +148,12 @@ for j in range(len(ps.Ma)):
         print(f'L_avg: {L_avg}')
         L_avg_list.append(L_avg)
 
+        constant = 3
+
         if Da<2:
-            L_scaled_list.append(L_avg)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
+            L_scaled_list.append(constant * L_avg)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
         else:
-            L_scaled_list.append(L_avg)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong/1e4)
+            L_scaled_list.append(constant * L_avg)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong/1e4)
 
         Q_strong_scaled_list.append(Q_strong)#/P_term_strong/u_term_strong/L_term_strong/t_term_strong)
         Q_weak_scaled_list.append(Q_weak)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
