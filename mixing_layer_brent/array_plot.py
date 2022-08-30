@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as clr
 
 plt.style.use('../plot_scripts/plot_style.mplstyle')
 
@@ -34,7 +35,6 @@ def B_analysis(ds):
     return vB_cos, v_dot_B, Ma 
 
 
-cmap = cmr.bubblegum
 
 # N = 10 
 
@@ -43,7 +43,7 @@ j = 0
 k = 1
 B_fl = True
 
-for i in range(len(ps.Lambda_fac)):
+for i in range(len(ps.box_width)):
     for j in range(len(ps.Ma)):
         for k in range(3):
             # for B_fl in [True, False]:
@@ -55,7 +55,7 @@ for i in range(len(ps.Lambda_fac)):
                 file_add = ps.filename_mix_add_ext(i, j, k, B_fl)
                 dir_name = f'mix{file_add}'
 
-                dir_create_list = ['','/luminosity','/T','/beta','/Bx','/By','/Bz']
+                dir_create_list = ['','/rho','/prs','/luminosity','/T','/beta','/Bx','/By','/Bz']
 
                 for d_create in dir_create_list:
                     os.system(f"mkdir Plots/{dir_name}{d_create}")
@@ -81,7 +81,7 @@ for i in range(len(ps.Lambda_fac)):
 
                     #* Luminosity
                     plt.figure(figsize=(10,20))
-                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],np.average(ds_lum['user_out_var0'], axis=1) , cmap=cmap)
+                    plt.pcolormesh(ds_lum['x1f'],ds_lum['x3f'],np.average(ds_lum['user_out_var0'], axis=1) , cmap=cmr.sunburst)
                     plt.title(dir_name)
                     plt.axis('scaled')
                     plt.colorbar()
@@ -89,21 +89,39 @@ for i in range(len(ps.Lambda_fac)):
                     plt.close()
 
                     T = (ds_prm['press']/ds_prm['rho']) * g.KELVIN * g.mu
-                    T = np.log10(T)
+                    # T = np.log10(T)
 
-                    print(f"Min pressure: {np.min(ds_prm['press'])}")
+                    # print(f"Min pressure: {np.min(ds_prm['press'])}")
 
                     #* Temperature
                     plt.figure(figsize=(10,20))
                     # plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],T[:,32,:], vmin=np.log10(4e4), vmax = np.log10(4e6))
-                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],np.average(T, axis=1), vmin=np.log10(4e4), vmax = np.log10(4e6))
+                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],np.average(T, axis=1),\
+                        norm=clr.LogNorm( vmin=4e4, vmax=4e6) , cmap=cmr.bubblegum)
                     plt.title(dir_name)
                     plt.axis('scaled')
                     plt.colorbar()
                     plt.savefig(f"Plots/{dir_name}/T/T_{str(N).zfill(5)}")
                     plt.close()
 
+                    #* Pressure
+                    plt.figure(figsize=(10,20))
+                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],np.average(ds_prm['press'], axis=1))
+                    plt.title(dir_name)
+                    plt.axis('scaled')
+                    plt.colorbar()
+                    plt.savefig(f"Plots/{dir_name}/prs/prs_{str(N).zfill(5)}")
+                    plt.close()
 
+                    #* Density
+                    plt.figure(figsize=(10,20))
+                    plt.pcolormesh(ds_prm['x1f'],ds_prm['x3f'],np.average(ds_prm['rho'], axis=1), \
+                        norm=clr.LogNorm( vmin=ps.amb_rho[0], vmax=ps.chi_cold*ps.amb_rho[0]), cmap=cmr.rainforest_r )
+                    plt.title(dir_name)
+                    plt.axis('scaled')
+                    plt.colorbar()
+                    plt.savefig(f"Plots/{dir_name}/rho/rho_{str(N).zfill(5)}")
+                    plt.close()
 
                     if B_fl:
 

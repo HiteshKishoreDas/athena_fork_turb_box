@@ -97,10 +97,10 @@ def cs_calc (T_hot,mu=0.5):
 
     # mu = 0.5
 
-    kB = 1.38*1e-23
-    mp = 1.66*1e-27
+    kB = 1.38*1e-23  # in SI
+    mp = 1.66*1e-27  # in SI
 
-    m_to_cm = 100
+    m_to_cm = 100    # convert from SI to CGS
 
     # return np.sqrt(g.g*R*T_hot/M) * m_to_cm/g.unit_velocity
     return np.sqrt(g.g*kB/(mu*mp) * T_hot) * m_to_cm/g.unit_velocity

@@ -6,7 +6,7 @@ import create_input as ci
 import create_job_script as cj
 
 
-for i in range(np.size(ps.Lambda_fac)):
+for i in [0,3,6,9,12]: #range(np.size(ps.box_width)):
     for j in range(np.size(ps.Ma)):
         for k in range(np.size(ps.B_dir)):
 

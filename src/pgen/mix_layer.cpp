@@ -65,6 +65,10 @@ std::unique_ptr<Cooling> cooler;
 
 //*_____________________________
 
+// Helper functions
+void myprint(string msg);
+
+
 #ifdef OPENMP_PARALLEL
 #include <omp.h>
 #endif
@@ -86,6 +90,7 @@ static Real amb_rho = 1.0;
 
 static Real front_thick = 2.5;
 static Real v_shear = 100 * (1.023*1e-3); // 100 km/s in kpc/Myr
+static Real v_shift = 0.0;                // velocity of shift in z
 
 static Real knx_KH  = 1.0;
 static Real kny_KH  = 1.0; 
@@ -114,6 +119,7 @@ void read_input (ParameterInput *pin){
 
   front_thick  = pin->GetReal("problem","front_thickness");
   v_shear      = pin->GetReal("problem","v_shear");
+  v_shift      = pin->GetReal("problem","v_shift");
 
   knx_KH = pin->GetReal("problem","knx_KH");
   kny_KH = pin->GetReal("problem","kny_KH");
@@ -390,14 +396,40 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   //* Read all the static variables from the input file
   read_input(pin);
 
+  Real cloud_chi = T_hot/T_floor;
+  Real rho_cold  = amb_rho * cloud_chi;
+  
   Real A_KH = amp_KH * v_shear;
   Real k_x  = 2*PI*knx_KH/L1;
   Real k_y  = 2*PI*kny_KH/L2;
 
-  printf("k_x, k_y: %lf \t %lf \n", k_x, k_y);
-  printf("L1, L2, L3: %lf \t %lf \t %lf \n", L1, L2, L3);
+  // Read/set problem parameters
 
-  Real rho_cold = amb_rho * T_hot/T_floor;
+  stringstream msg;
+  if(gid == 0) {
+    msg << "[pgen] unit_time = " << unit_time << ", unit_rho = " << unit_density 
+        << ", unit_len = " << unit_length;
+    myprint(msg.str());
+    msg.str("");
+    msg << "[pgen] T_floor = " << T_floor << ", T_cut = " << T_cut
+        << ", t_cool,hot = " << cooler->tcool(T_hot,
+                                              amb_rho * unit_density) / unit_time
+        << ", t_cool,mix = " << cooler->tcool(sqrt(T_hot*T_floor),
+                                               sqrt(cloud_chi) * amb_rho * unit_density) / unit_time
+        << ", t_cool,cold = " << cooler->tcool(T_floor,
+                                               rho_cold * unit_density) / unit_time
+        << ", t_cool,Da (at 2e5K) = " << cooler->tcool(2.0e5,
+                                               amb_rho * T_hot/2.0e5 * unit_density) / unit_time
+        << ", t_KH = " << sqrt(cloud_chi) * L1 / v_shear;
+
+    myprint(msg.str());
+    msg.str("");
+    msg << "[pgen] k_x = " << k_x << ", k_y = " << k_y 
+        << "[pgen] L1 = " << L1<< ", L2 = " << L2 << ", L3 = " << L3;
+    myprint(msg.str());
+    msg.str("");
+  } 
+  
 
   Real x1, x2, x3;
   Real x1f, x2f, x3f;
@@ -422,6 +454,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         phydro->u(IM1,k,j,i) = phydro->u(IDN,k,j,i) * (v_shear/2) * (1 + tanh(x3/front_thick));
         phydro->u(IM2,k,j,i) = 0.0;
         phydro->u(IM3,k,j,i) = phydro->u(IDN,k,j,i) * A_KH * exp(-1.0*x3*x3/front_thick/front_thick) * sin(k_x*x1) * sin(k_y*x2);
+        phydro->u(IM3,k,j,i) += phydro->u(IDN,k,j,i) * v_shift;
 
         if (NON_BAROTROPIC_EOS) {
           // Kinetic energy
@@ -512,8 +545,6 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
               Real dt_cgs   = pmy_mesh->dt * unit_time;
               Real cLfac    = Lambda_fac;
 
-              // ! CHANGE THE ABOVE TO CORRECT VALUE
-
               Real temp_new = max(cooler->townsend(temp_cgs,rho_cgs,dt_cgs, cLfac), T_floor);
 
               Real ccool_2 = ((temp_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
@@ -528,7 +559,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
         else{  // If T<=T_floor
 
           Real ccool_2 = ((T_floor-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1); 
-          lum_cell-= ccool_2;
+          // lum_cell-= ccool_2;
 
         }
         
@@ -544,4 +575,12 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 //  \brief
 //========================================================================================
 void Mesh::UserWorkAfterLoop(ParameterInput *pin) {
+}
+
+
+// prints message only once, and adds newline.
+void myprint(string msg) {
+  if (Globals::my_rank==0) {
+    cout << msg << endl;
+  }
 }

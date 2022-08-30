@@ -45,6 +45,9 @@
 //* ___________________________
 //* For Max's townsend cooling
 
+// Helper functions
+void myprint(string msg);
+
 using namespace std;
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
@@ -400,6 +403,36 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   //   sqrt(gamma * tfloor);
 
 
+
+  // Read/set problem parameters
+  Real sound_speed = sqrt(g*CONST_kB*T_floor / (mu*CONST_amu) );
+  Real l_shatter = cooler->tcool(  T_floor, cloud_chi* amb_rho * unit_density) ;
+  l_shatter     *= sound_speed ;
+  l_shatter     /= unit_length;
+
+  stringstream msg;
+  if(gid == 0) {
+    msg << "[pgen] unit_time = " << unit_time << ", unit_rho = " << unit_density 
+        << ", unit_len = " << unit_length;
+    myprint(msg.str());
+    msg.str("");
+    msg << "[pgen] T_floor = " << T_floor << ", T_cut = " << T_cut << ", T_hot = " << T_hot
+        << ", t_cool,hot = " << cooler->tcool(T_hot,
+                                              amb_rho * unit_density) / unit_time
+        << ", t_cool,mix = " << cooler->tcool(sqrt(T_hot*T_cold),
+                                              sqrt(cloud_chi)* amb_rho * unit_density) / unit_time
+        << ", t_cool,cold = " << cooler->tcool(T_cold,
+                                              cloud_chi* amb_rho * unit_density) / unit_time
+        << ", sound_speed = " << sound_speed 
+        << ", R_cloud = " <<  cloud_radius
+        << ", l_shatter = " << l_shatter;
+
+
+    myprint(msg.str());
+    msg.str("");
+  } 
+
+
   // * Read static variables from the input file
   read_input(pin);
 
@@ -529,4 +562,12 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 //========================================================================================
 
 void Mesh::UserWorkAfterLoop(ParameterInput *pin) {
+}
+
+
+// prints message only once, and adds newline.
+void myprint(string msg) {
+  if (Globals::my_rank==0) {
+    cout << msg << endl;
+  }
 }

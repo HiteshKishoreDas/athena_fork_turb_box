@@ -9,11 +9,11 @@ def tag_replace(filedata,tag,value):
 
 def athinput_replace(template_data,i,j,k):
 
-    template_data = tag_replace(template_data,"!!HST_DT!!" ,ps.hst_dt_arr[0])
-    template_data = tag_replace(template_data,"!!OUT_DT!!" ,ps.out_dt_arr[0])
-    template_data = tag_replace(template_data,"!!RST_DT!!" ,ps.rst_dt_arr[0])
-    template_data = tag_replace(template_data,"!!USER_OUT_DT!!",ps.out_dt_arr[0])
-    template_data = tag_replace(template_data,"!!TLIM!!"   ,ps.tlim[0])
+    template_data = tag_replace(template_data,"!!HST_DT!!" ,ps.hst_dt_arr[i])
+    template_data = tag_replace(template_data,"!!OUT_DT!!" ,ps.out_dt_arr[i])
+    template_data = tag_replace(template_data,"!!RST_DT!!" ,ps.rst_dt_arr[i])
+    template_data = tag_replace(template_data,"!!USER_OUT_DT!!",ps.out_dt_arr[i])
+    template_data = tag_replace(template_data,"!!TLIM!!"   ,ps.tlim[i])
 
 
     template_data = tag_replace(template_data,"!!NX1!!",ps.nx1[0])
@@ -24,20 +24,21 @@ def athinput_replace(template_data,i,j,k):
     template_data = tag_replace(template_data,"!!NX2_MESH!!",ps.nx2_mesh[0])
     template_data = tag_replace(template_data,"!!NX3_MESH!!",ps.nx3_mesh[0])
 
-    template_data = tag_replace(template_data,"!!X1MIN!!",ps.x1min[0])
-    template_data = tag_replace(template_data,"!!X2MIN!!",ps.x2min[0])
-    template_data = tag_replace(template_data,"!!X3MIN!!",ps.x3min[0])
+    template_data = tag_replace(template_data,"!!X1MIN!!",ps.x1min[i])
+    template_data = tag_replace(template_data,"!!X2MIN!!",ps.x2min[i])
+    template_data = tag_replace(template_data,"!!X3MIN!!",ps.x3min[i])
 
-    template_data = tag_replace(template_data,"!!X1MAX!!",ps.x1max[0])
-    template_data = tag_replace(template_data,"!!X2MAX!!",ps.x2max[0])
-    template_data = tag_replace(template_data,"!!X3MAX!!",ps.x3max[0])
+    template_data = tag_replace(template_data,"!!X1MAX!!",ps.x1max[i])
+    template_data = tag_replace(template_data,"!!X2MAX!!",ps.x2max[i])
+    template_data = tag_replace(template_data,"!!X3MAX!!",ps.x3max[i])
 
     template_data = tag_replace(template_data,"!!P_FLOOR!!",ps.P_floor[0])
 
     template_data = tag_replace(template_data,"!!AMB_RHO!!",ps.amb_rho[0])
 
-    template_data = tag_replace(template_data,"!!FRONT_TH!!",ps.front_thickness[0])
+    template_data = tag_replace(template_data,"!!FRONT_TH!!",ps.front_thickness[i])
     template_data = tag_replace(template_data,"!!V_SHEAR!!",ps.v_shear)
+    template_data = tag_replace(template_data,"!!V_SHIFT!!",ps.v_shift)
 
     template_data = tag_replace(template_data,"!!KNX_KH!!",ps.knx_KH)
     template_data = tag_replace(template_data,"!!KNY_KH!!",ps.kny_KH)
@@ -52,7 +53,7 @@ def athinput_replace(template_data,i,j,k):
     template_data = tag_replace(template_data,"!!XSOL!!",ps.Xsol)
     template_data = tag_replace(template_data,"!!ZSOL!!",ps.Zsol)
 
-    template_data = tag_replace(template_data,"!!LAM_FAC!!",ps.Lambda_fac[i])
+    template_data = tag_replace(template_data,"!!LAM_FAC!!",ps.Lambda_fac[0])
 
     template_data = tag_replace(template_data,"!!B_X!!",ps.B_x[i,j,k])
     template_data = tag_replace(template_data,"!!B_Y!!",ps.B_y[i,j,k])

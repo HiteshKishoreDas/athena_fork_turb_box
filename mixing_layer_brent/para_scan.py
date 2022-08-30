@@ -29,7 +29,8 @@ T_cut_mul = 0.5                         # For cooling cutoff
 T_cut     = T_cut_mul*T_hot             # For cooling cutoff
 
 amb_rho   = np.array([1.6e-4]) 
-Lambda_fac = np.array([1e4,5000,1000.0,500.0,100.0, 50.0, 10.0, 5.0, 1.0, 0.5, 0.1]) 
+# Lambda_fac = np.array([1e4,5000,1000.0,500.0,100.0, 50.0, 10.0, 5.0, 1.0, 0.5, 0.1]) 
+Lambda_fac = np.array([1.0]) 
 
 # Density of the ambient medium
 
@@ -71,8 +72,11 @@ cs_cold = vt.cs_calc(T_hot, mu)
 
 cloud_radius = R_lsh*l_sh
 
-box_width  = np.array([0.1])  # 0.1 kpc = 100 pc # cloud_radius*2
-box_length = np.array([1.0])  # 0.3 kpc = 300 pc # box_width*10
+# box_width  = np.array([0.1])  # 0.1 kpc = 100 pc # cloud_radius*2
+# box_length = np.array([1.0])  # 0.3 kpc = 300 pc # box_width*10
+
+box_width  = 0.1 * np.array([100000.0, 50000.0, 10000.0, 5000.0, 1000.0, 500.0, 100.0, 50.0, 10.0, 5.0, 1.0, 0.5, 0.1])
+box_length = 10*box_width 
 
 # Cooling flag
 cooling_flag = 1  # 1 for cooling and 0 for no cooling
@@ -92,27 +96,34 @@ Ma = np.array([10])
 
 # Box sizes
 x1max = box_width
-x1min = np.array([0.0])
+x1min = np.zeros_like(box_width)
 
 x2max = box_width
-x2min = np.array([0.0])
+x2min = np.zeros_like(box_width)
 
-x3max = box_length* 9/10  # 0.8
+x3max = box_length* 5/10  # 0.8
 x3min = x3max - box_length
 
 # Number of cells
-nx1 = np.array([64 ])
-nx2 = np.array([64 ])
-nx3 = np.array([640])
+nx1 = np.array([128 ])
+nx2 = np.array([128 ])
+nx3 = np.array([1280])
 
-nx1_mesh = np.array([32])
-nx2_mesh = np.array([32])
-nx3_mesh = np.array([32])
+# nx1 = np.array([128])
+# nx2 = np.array([128])
+# nx3 = np.array([1280])
+
+nx1_mesh = np.array([64])
+nx2_mesh = np.array([64])
+nx3_mesh = np.array([64])
 
 # Initial profile settings 
 
 front_thickness = box_width/20
 v_shear         = 0.1022   # M*vt.cs_calc(T_hot,mu)
+
+v_shift = -0.01 * (box_width/box_width[4])
+# v_shift = 0.0
 
 knx_KH = 1.0
 kny_KH = 1.0
@@ -143,13 +154,13 @@ if B_flag:
 else:
     B_dir     = ['h']
 
-B_x = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(Lambda_fac) )
-B_y = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(Lambda_fac) )
-B_z = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(Lambda_fac) )
+B_x = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(box_width) )
+B_y = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(box_width) )
+B_z = np.array([ [ [0.0] *len(B_dir) ] *len(Ma)] *len(box_width) )
 
 if B_flag:
 
-    for i_l, Lam_fac in enumerate(Lambda_fac): 
+    for i_l, Lam_fac in enumerate(box_width): 
 
         for i_b, beta in enumerate(beta_list):
 
@@ -180,8 +191,8 @@ ntasks_per_node = 40
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 
-time_limit     = ["23:55:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_rst = ["23:52:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit     = ["12:55:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_rst = ["12:52:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
 
 
@@ -190,15 +201,15 @@ time_limit_rst = ["23:52:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 def filename_mix_add (i,j,k):
 
     if B_flag:
-        return f'_Lam{i}_Ma{j}_B{k}'
+        return f'_L{i}_Ma{j}_B{k}_moving'
     else:
-        return f'_Lam{i}_Ma{j}_Bnot_hydro'
+        return f'_L{i}_Ma{j}_Bnot_hydro_moving'
     # return f'_res_256_Rlsh_0'
 
 #* For access to plotting scripts
 def filename_mix_add_ext (i, j, k, MHD_flag):
 
     if MHD_flag:
-        return f'_Lam{i}_Ma{j}_B{k}'
+        return f'_L{i}_Ma{j}_B{k}_moving'
     else:
-        return f'_Lam{i}_Ma{j}_Bnot_hydro'
+        return f'_L{i}_Ma{j}_Bnot_hydro_moving'
