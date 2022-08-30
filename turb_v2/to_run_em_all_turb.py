@@ -7,7 +7,8 @@ import create_job_script as cj
 
 
 # for i in range(np.size(R_lsh)): # np.size(nx1)):
-for i in range(np.size(R_lsh)): # np.size(nx1)):
+# for i in range(np.size(R_lsh)): # np.size(nx1)):
+for i in [len(R_lsh)-1]: # np.size(nx1)):
     for j in range(np.size(nx1)):
 
         ## os.system('source ../load_module')

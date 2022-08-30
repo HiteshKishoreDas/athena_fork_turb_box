@@ -42,11 +42,12 @@ def job_id (job_list,i,j, B_flag):
 
     return -1    
 
-job_list = job_list_read("job_list/M_0.25_job_list")
+job_list = job_list_read("job_list/M_0.5_job_list")
         
 
 # for i in [4]:#range(np.size(R_lsh)):
-for i in range(np.size(R_lsh)):
+# for i in range(np.size(R_lsh)):
+for i in [len(R_lsh)-1]: #range(np.size(R_lsh)):
     for j in range(np.size(nx1)):
         
         turb_job_id = job_id(job_list, i, j, B_flag)
