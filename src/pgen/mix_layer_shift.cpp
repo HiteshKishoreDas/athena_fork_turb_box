@@ -94,6 +94,8 @@ static Real front_thick = 2.5;
 static Real v_shear = 100 * (1.023*1e-3); // 100 km/s in kpc/Myr
 static Real v_shift0 = 0.0;                // velocity of shift in z
 
+static Real front_velocity = 0.0;
+
 static Real knx_KH  = 1.0;
 static Real kny_KH  = 1.0; 
 static Real amp_KH = 0.01;    // Amplitude = amp_KH * v_shear
@@ -332,6 +334,8 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   //* Required shift velocity
   v_shift_t = -1 * (front_posn_new-front_posn_old)/dt;
 
+  // For history output
+  front_velocity = v_shift_t;
 
   //* Add the shift velocity
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
@@ -371,6 +375,13 @@ Real hst_total_cooling(MeshBlock *pmb, int iout) {
     return 0;
 }
 
+Real hst_front_velocity(MeshBlock *pmb, int iout) {
+  if(pmb->lid == 0)
+    return abs(front_velocity);
+  else
+    return 0.0;
+}
+
 Real hst_debug(MeshBlock *pmb, int iout) {
   if(pmb->lid == 0)
     return debug_hst;
@@ -394,6 +405,10 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
     }
 
     townsend_cooling(pmb, time, dt,
+            prim, prim_scalar,
+            bcc, cons,
+            cons_scalar);
+    frame_shift(pmb, time, dt,
             prim, prim_scalar,
             bcc, cons,
             cons_scalar);
@@ -428,7 +443,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(11);
+    AllocateUserHistoryOutput(12);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -440,18 +455,20 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
     EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
-    EnrollUserHistoryOutput(10, hst_debug, "total_debug");
+    EnrollUserHistoryOutput(10, hst_front_velocity, "front_velocity", UserHistoryOperation::max);
+    EnrollUserHistoryOutput(11, hst_debug, "total_debug");
   }
   else {
 
-    AllocateUserHistoryOutput(6);
+    AllocateUserHistoryOutput(7);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
-    EnrollUserHistoryOutput(5, hst_debug, "total_debug");
+    EnrollUserHistoryOutput(5, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(6, hst_debug, "total_debug");
 
   }
 
