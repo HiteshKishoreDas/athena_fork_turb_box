@@ -66,3 +66,7 @@ doc/doxy*
 
 # pycache
 */__pycache__/*
+
+
+# core files
+*core.cobra*
