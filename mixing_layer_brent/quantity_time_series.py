@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 import scipy.signal as sg
 
-plt.style.use('../plot_scripts/plot_style.mplstyle')
+# plt.style.use('../plot_scripts/plot_style.mplstyle')
+plt.style.use('dark_background')
 
 # sys.path.insert(0, '../')
 sys.path.insert(0, './plot_scripts')
@@ -55,19 +56,23 @@ def lum_fn(hst,i):
 
 
 # fig, ax = plt.subplots(nrows=2, ncols=2, figsize = (20,25))
-fig, ax = plt.subplots(nrows=len(ps.box_width), ncols=1, figsize = (10,85))
-# fig, ax = plt.subplots(nrows=1, ncols=1, figsize = (10,15))
+# fig, ax = plt.subplots(nrows=len(ps.box_width), ncols=1, figsize = (10,85))
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize = (10,10))
 
 Da_list       = []
 L_avg_list    = []
 Q_theory_list = []
+
+label_list=['Large box width', r'Large $\Lambda_0$']
+
+Lambda_fac = [ 1.0, 1.0, 1.0, 1.0, 1.0, 10.0, 100.0, 1000.0, 10000.0]
 
 # file_list = ['cooling_test', 'cooling_test_2']
 # file_list = ['hst_test']
 
 for i_plot,i in enumerate(range(len(ps.box_width))):
     for j in range(len(ps.Ma)):
-        for k in range(3):
+        for k in range(1):
             # for B_fl in [True, False]:
             for B_fl in [False]:
 
@@ -97,7 +102,9 @@ for i_plot,i in enumerate(range(len(ps.box_width))):
 
                 time, luminosity = lum_fn(hst, i)
 
-                ax[i_plot].plot(time/ps.t_KH[i_plot], luminosity)#, color=col_list[plot_i], label=legend_list[plot_i])
+                # ax[i_plot].plot(time/ps.t_KH[i_plot], luminosity)#, color=col_list[plot_i], label=legend_list[plot_i])
+                # ax.plot(time/ps.t_KH[i_plot], luminosity, label=label_list[i_plot])#, color=col_list[plot_i], label=legend_list[plot_i])
+                ax.plot(time/ps.t_KH[i_plot], luminosity, label=f'Lbox = {ps.box_width[i_plot]}, '+ r'$\Lambda_0$=' + f'{Lambda_fac[i_plot]}')#, color=col_list[plot_i], label=legend_list[plot_i])
                 # ax.plot(time, luminosity)#, color=col_list[plot_i], label=legend_list[plot_i])
 
 
@@ -107,9 +114,11 @@ for i_plot,i in enumerate(range(len(ps.box_width))):
                 if not B_fl:
 
                     # L_avg = np.average(luminosity[-1250:-1000])
-                    L_avg = np.average(luminosity[-50:])
+                    L_avg = np.average(luminosity[-250:])
+                    print(f'L_avg: {L_avg}')
 
-                    ax[i_plot].axhline(L_avg, linestyle='dashed')#,\
+                    # ax[i_plot].axhline(L_avg, linestyle='dashed')#,\
+                    # ax.axhline(L_avg, linestyle='dashed', label=f'L_avg = {"%.4e" % L_avg}')
                           # color=col_list[plot_i],\
                         # label=r'L$_{\rm avg}$'+ f' = {np.round(L_avg,3)}')
 
@@ -120,7 +129,8 @@ for i_plot,i in enumerate(range(len(ps.box_width))):
         # ax[i].set_xlabel('time (Myr)')
         # ax[i].set_ylabel('Luminosity')
 
-        ax[i_plot].set_yscale('log')
+        # ax[i_plot].set_yscale('log')
+        ax.set_yscale('log')
         # ax[i].legend(loc='lower right')
 
         # ax[i].set_title(f'Lambda_frac: {ps.Lambda_fac[i]}')
@@ -128,16 +138,24 @@ for i_plot,i in enumerate(range(len(ps.box_width))):
         t_turb = ps.box_width[i_plot]/ps.v_shear
         t_cool = ps.t_cool_Da
 
-        Da = (t_turb/t_cool)[0]
+        if i_plot==0: 
+            Da = (t_turb/t_cool)[0]
 
-        ax[i_plot].set_title(f'Box_width: {ps.box_width[i_plot]} kpc, Da = {Da}')
-        ax[i_plot].set_xlabel('time (Myr)')
-        ax[i_plot].set_ylabel('Luminosity')
+        # ax[i_plot].set_title(f'Box_width: {ps.box_width[i_plot]} kpc, Da = {Da}')
+        # ax[i_plot].set_xlabel('time (Myr)')
+        # ax[i_plot].set_ylabel('Luminosity')
 
+        print(f'Box_width: {ps.box_width[i_plot]} kpc, Da = {Da}')
+
+        # ax.set_title(f'Box_width: {ps.box_width[0]} kpc, Da = {Da}')
+        # ax.set_title(f'Da = {np.round(Da,3)}')
+        ax.set_xlabel('time (Myr)')
+        ax.set_ylabel('Luminosity')
         # ax[i,j].set_ylim(0.99,1)
 
         # ax[i].set_title(r"$\mathcal{M}_{\rm a}$"+f" = {ps.Ma[j]}; " + r"t$_{\rm cool}$/t$_{\rm KH}$" + f" = {tcool_tKH}" + f"; Da = {np.round(Da, 3)}")#+f"\n {setup_name}")
-
+        
+        plt.legend(fontsize=12)
 # plt.savefig("test.png")
 
 #%%

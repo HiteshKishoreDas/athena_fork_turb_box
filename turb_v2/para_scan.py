@@ -29,7 +29,8 @@ cloud_pos_z  = 0.0
 T_floor   = 40000                       # No cooling below T_floor
 T_ceil    = 100000000                   # No gas above T_ceil
 T_hot_req = T_floor*cloud_chi_temp      # Required T_hot
-T_hot     = T_hot_req*(0.7/2)*(4/7.5)*(4/7.5)*0.25   # Initial ambient hot medium temperature
+# T_hot     = T_hot_req*(0.7/2)*(4/7.5)*(4/7.5)*0.25   # Initial ambient hot medium temperature
+T_hot     = T_hot_req                   # Initial ambient hot medium temperature
 T_cold    = 2*T_floor                   # For cold gas mass calculation
 T_cut_mul = 0.5                         # For cooling cutoff
 T_cut     = T_cut_mul*T_hot_req         # For cooling cutoff
@@ -53,13 +54,15 @@ muH = 1.0/X
 mH  = 1.0
 
 # R_lsh = np.array([5,10,50,250,500])         # For M = 0.25
-R_lsh = np.array([10,50,100,250,500,1000])     # For M = 0.5
+# R_lsh = np.array([10,50,100,250,500,1000])     # For M = 0.5
 # R_lsh = np.array([250,500,1000,2500,5000])  # For M = 0.9
 
-t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z)
-t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(cloud_chi_temp),np.sqrt(T_floor*T_hot_req),Z)
-t_cool_amb   = cf.tcool_calc(amb_rho,T_hot_req,Z)
-t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot_req,Z)
+R_lsh = np.array([1000])     # For M = 0.5
+
+t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z_sol)
+t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(cloud_chi_temp),np.sqrt(T_floor*T_hot_req),Z_sol)
+t_cool_amb   = cf.tcool_calc(amb_rho,T_hot_req,Z_sol)
+t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot_req,Z_sol)
 
 
 l_sh = vt.cs_calc(T_floor,mu)*t_cool_cloud
@@ -79,7 +82,7 @@ cloud_flag   = 1  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 0  # 1 for adding magnetic fields
+B_flag       = 1  # 1 for adding magnetic fields
 
 Mach_arr = np.array([0.25, 0.5, 0.9])
 
@@ -110,13 +113,13 @@ x3max = L_box/2
 x3min = -1*x3max
 
 # Number of cells
-nx1 = np.array([512])
-nx2 = np.array([512])
-nx3 = np.array([512])
+nx1 = np.array([64])
+nx2 = np.array([64])
+nx3 = np.array([64])
 
 nx1_mesh = np.array([16])
-nx2_mesh = np.array([32])
-nx3_mesh = np.array([32])
+nx2_mesh = np.array([16])
+nx3_mesh = np.array([16])
 
 # predicted turbulent velocity
 
@@ -155,7 +158,7 @@ rst_dt_trb_arr = tlim_trb/rst_dt_N
 rst_dt_cld_arr = tlim_cld/(rst_dt_N * (tlim_cld-tlim_trb)/tlim_trb).astype(int)
 
 # ratio of shear component
-f_shear = 0.3
+f_shear = 1.0
 
 # rseed
 rseed = 1
@@ -195,7 +198,8 @@ else:
 
 n_cores = (nx1*nx2*nx3)/(nx1_mesh*nx2_mesh*nx3_mesh)
 
-cluster_name = "cobra"
+# cluster_name = "cobra"
+cluster_name = "freya"
 
 if cluster_name=="freya":
     dir_path_add = "mpa/"
@@ -203,16 +207,16 @@ else:
     dir_path_add = ""
 
 # queue = "p.24h" #"medium" # "n0064"
-queue = "n0256"
+queue = "p.24h"
 ntasks_per_node = 32
 
 nodes = (n_cores/ntasks_per_node).astype(int)
 
-time_limit_turb      = ["23:49:00"] # ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_turb_rst  = ["23:35:00"] # ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_turb      = ["04:49:00"] # ["23:49:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_turb_rst  = ["04:35:00"] # ["23:35:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
-time_limit_cloud     = ["23:59:00"] # ["23:59:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
-time_limit_cloud_rst = ["23:55:00"] # ["23:55:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
+time_limit_cloud     = ["04:59:00"] # ["23:59:00"] #["03:00:00","12:00:00"]#,"23:49:00"]
+time_limit_cloud_rst = ["04:55:00"] # ["23:55:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 
 restart_N = 10
 
@@ -226,9 +230,9 @@ t_cc = np.sqrt(cloud_chi)*cloud_radius/v_turb_predict
 def filename_turb_add (i,j):
 
     if B_flag:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_beta_{beta_list}'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_fshear_{f_shear}_beta_{beta_list}'
     else:
-        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_hydro'
+        return f'_Rlsh{i}_{R_lsh[i]}_res{j}_{nx1[j]}_rseed_{rseed}_M_{M}_fshear_{f_shear}_hydro'
 
 def filename_cloud_add (i,j):
 

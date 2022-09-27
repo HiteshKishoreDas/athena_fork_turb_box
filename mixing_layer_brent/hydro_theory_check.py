@@ -13,6 +13,14 @@ import hst_read as hr
 
 import globals as g
 
+cwd = os.getcwd()
+repo_abs_path = cwd[:-len(cwd.split('/')[-1])]
+
+cooling_dir = repo_abs_path+'cooling_power_law/'
+
+sys.path.append(cooling_dir)
+import cooling_fn as cf
+
 # ncells = 64*64*640
 # ncells = 256*256*2560
 ncells = 128*128*1280
@@ -62,6 +70,10 @@ L_scaled_list = []
 Q_strong_scaled_list = []
 Q_weak_scaled_list   = []
 
+Lambda_fac = [ 1.0, 1.0, 1.0, 1.0, 1.0, 10.0, 100.0, 1000.0, 10000.0]
+marker_sty = [ 'D', 'D', 'D', 'D', 'D',  'o',   'o',    'o',     'o']
+color_sty  = [ 'tab:blue', 'tab:blue', 'tab:blue', 'tab:blue', 'tab:blue',  'tab:red',   'tab:red',    'tab:red',     'tab:red']
+
 for j in range(len(ps.Ma)):
     for i in range(len(ps.box_width)):
 
@@ -75,8 +87,8 @@ for j in range(len(ps.Ma)):
         # tcool_tKH = np.round(ps.t_cool_mix[i]/ps.t_KH[0], 4)
 
         t_turb = ps.box_width[i] / (u*1e5/g.unit_velocity) 
-        # t_cool = ps.t_cool_mix[i]
-        t_cool = ps.t_cool_Da[0]
+        t_cool = cf.tcool_calc(ps.amb_rho*np.sqrt(ps.chi_cold), 2e5 ,ps.Z, Lambda_fac=Lambda_fac[i])
+        # t_cool = ps.t_cool_Da[0]
         Da = t_turb/t_cool
 
 
@@ -108,8 +120,10 @@ for j in range(len(ps.Ma)):
         L_term_strong = (ps.box_width[i]*1000/100)**L_e_strong
         L_term_weak   = (ps.box_width[i]*1000/100)**L_e_weak
 
-        t_term_strong = (ps.t_cool_cloud[0]/0.03)**t_e_strong
-        t_term_weak   = (ps.t_cool_cloud[0]/0.03)**t_e_weak
+        t_cool_cloud = cf.tcool_calc(ps.amb_rho*ps.chi_cold, ps.T_floor ,ps.Z, Lambda_fac=Lambda_fac[i])
+
+        t_term_strong = (t_cool_cloud/0.03)**t_e_strong
+        t_term_weak   = (t_cool_cloud/0.03)**t_e_weak
 
         Q_strong = Q0 
         Q_strong *= P_term_strong 
@@ -149,13 +163,13 @@ for j in range(len(ps.Ma)):
 
         time, luminosity = lum_fn(hst, i)
 
-        # L_avg = np.average(luminosity[-250:])
-        L_avg = np.average(luminosity[-50:])
+        L_avg = np.average(luminosity[-250:])
+        # L_avg = np.average(luminosity[-50:])
 
         print(f'L_avg: {L_avg}')
         L_avg_list.append(L_avg)
 
-        constant = 3
+        constant = 1
 
         if Da<2:
             L_scaled_list.append(constant * L_avg)#/P_term_weak/u_term_weak/L_term_weak/t_term_weak)
@@ -186,7 +200,10 @@ theory_weak_plot   = np.array(Q_weak_list)
 # plt.plot(Da_list, theory_plot, label=r'Q/Q$_0$ from Theory $\times 10^4$')
 # plt.plot(Da_list, theory_plot/sim_plot, label='Theory')
 
-plt.scatter(Da_list_point, L_scaled_list, label='Simulation luminosity')
+for i_Da, Da in enumerate(Da_list_point):
+    plt.scatter(Da, L_scaled_list[i_Da], marker=marker_sty[i_Da], color=color_sty[i_Da]) #,label='Simulation luminosity')
+
+
 plt.plot(Da_list_line, Q_strong_scaled_list, linestyle='dashed', label=r'Q: strong cooling')
 plt.plot(Da_list_line, Q_weak_scaled_list,   linestyle='dashed', label=r'Q: weak cooling')
 

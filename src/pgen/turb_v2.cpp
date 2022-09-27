@@ -18,7 +18,7 @@
 
 //! Remove if not required
 #include <algorithm>     // max()
-// #include <string>     // c_str(), string
+#include <string>     // c_str(), string
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -45,10 +45,11 @@
 //* ___________________________
 //* For Max's townsend cooling
 
+using namespace std;
+
 // Helper functions
 void myprint(string msg);
 
-using namespace std;
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
 static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
