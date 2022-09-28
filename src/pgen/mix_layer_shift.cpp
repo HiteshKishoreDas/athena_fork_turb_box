@@ -336,7 +336,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   printf("\n_______________________________________\n");
   printf("global_cold_mass = %lf \n", global_cold_mass);
-  printf("local_cold_mass  = %lf \n", global_cold_mass);
+  printf("local_cold_mass  = %lf \n", local_cold_mass);
 
 
   //* New front position
@@ -354,8 +354,6 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   dv_shift_t = v_shift_t_new-v_shift_t_old;
    
   printf("time           = %lf   \n", pmb->pmy_mesh->time);
-  printf("dt_hyperbolic  = %lf   \n", pmb->pmy_mesh->dt_hyperbolic);
-  // printf("dt_parabolic   = %lf   \n", pmb->pmy_mesh->dt_parabolic );
   printf("dt             = %lf \n\n", sim_dt);
 
   printf("v_shift_t_old  = %lf \n"  , v_shift_t_old );
@@ -371,8 +369,15 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   if ( (front_posn_new - v_shift_t_new*dt) < x3min ){
     v_shift_t_new *= 0.1;
     dv_shift_t = v_shift_t_new-v_shift_t_old;
+
+    printf("_______________________________________\n");
+    printf("v_shift too high!... \n");
+    printf("New v_shift: %lf \n", v_shift_t_new);
+    printf("_______________________________________\n");
+
   }
 
+  
 
   //* Add the shift velocity
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
@@ -385,8 +390,25 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
         E_kin_old     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
         E_kin_old     /= 2*cons(IDN,k,j,i);
 
+        Real E_mag = 0.0;
+
+        if (MAGNETIC_FIELDS_ENABLED) {
+          E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
+          E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
+          E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
+          E_mag *= 0.5;
+        }
+
+        Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
+
         // Modify momentum in x3
-        cons(IM3,k,j,i) += cons(IDN,k,j,i) * 0.1 * dv_shift_t;
+        printf("_______________________________________\n");
+        printf(" IM3 before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
+
+        cons(IM3,k,j,i) += cons(IDN,k,j,i) * dv_shift_t;
+
+        printf(" IM3 after : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
+        printf("_______________________________________\n");
 
         // Calculate new kinetic energy
         Real E_kin_new = cons(IM1,k,j,i)*cons(IM1,k,j,i);
@@ -395,11 +417,12 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
         E_kin_new     /= 2*cons(IDN,k,j,i);
 
         // Add the residual energy to total energy
-        cons(IEN,k,j,i) += E_kin_new-E_kin_old;
+        cons(IEN,k,j,i) = E_kin_new + E_th + E_mag;
 
       }
     }
   } // End of loop over Meshblock
+
 
   // Update front position
   // front_posn_old = front_posn_new;
@@ -450,6 +473,7 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
             prim, prim_scalar,
             bcc, cons,
             cons_scalar);
+
     frame_shift(pmb, time, dt,
             prim, prim_scalar,
             bcc, cons,
