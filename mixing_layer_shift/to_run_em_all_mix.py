@@ -29,7 +29,7 @@ for i in range(np.size(ps.box_width)):
                 os.system(f'(cd mix{ps.filename_mix_add(i,j,k)} && ./turb_compile_freya)')
                 # os.system(f'(cd para_scan{filename_add(i,j)} && ./turb_compile)')
 
-            # os.system(f'(cd mix{ps.filename_mix_add(i,j,k)} && sbatch job_script_mix{ps.filename_mix_add(i,j,k)}.sh)')
+            os.system(f'(cd mix{ps.filename_mix_add(i,j,k)} && sbatch job_script_mix{ps.filename_mix_add(i,j,k)}.sh)')
             # os.system(f'(cd para_scan{filename_add(i,j)} && ./turb_run athinput{filename_add(i,j)}.turb 2)')
 
             print("_________________________________________________")

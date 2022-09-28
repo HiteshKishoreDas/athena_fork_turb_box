@@ -106,9 +106,9 @@ x3max = box_length* 5/10  # 0.8
 x3min = x3max - box_length
 
 # Number of cells
-nx1 = np.array([32 ])
-nx2 = np.array([32 ])
-nx3 = np.array([320])
+nx1 = np.array([64 ])
+nx2 = np.array([64 ])
+nx3 = np.array([640])
 
 # nx1 = np.array([128])
 # nx2 = np.array([128])
