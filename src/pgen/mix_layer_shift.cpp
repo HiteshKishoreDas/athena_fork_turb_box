@@ -384,11 +384,18 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
 
+        printf("_______________________________________\n");
+        printf(" rho       : (%d,%d,%d) %lf \n\n", k,j,i, cons(IDN,k,j,i));
+        printf(" E_tot_old  : (%d,%d,%d) %lf \n" , k,j,i, cons(IEN,k,j,i));
+
         // Calculate current kinetic energy
         Real E_kin_old = cons(IM1,k,j,i)*cons(IM1,k,j,i);
         E_kin_old     += cons(IM2,k,j,i)*cons(IM2,k,j,i);
         E_kin_old     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
         E_kin_old     /= 2*cons(IDN,k,j,i);
+
+        printf(" E_kin_old : (%d,%d,%d) %lf \n"  , k,j,i, E_kin_old);
+
 
         Real E_mag = 0.0;
 
@@ -398,17 +405,18 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
           E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
           E_mag *= 0.5;
         }
+        printf(" E_mag     : (%d,%d,%d) %lf \n", k,j,i, E_mag);
 
         Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
+        printf(" E_th before: (%d,%d,%d) %lf \n\n", k,j,i, cons(IEN,k,j,i));
 
         // Modify momentum in x3
-        printf("_______________________________________\n");
-        printf(" IM3 before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
+        printf(" IM3  before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
 
+        //! No issue occurs if this line is removed
         cons(IM3,k,j,i) += cons(IDN,k,j,i) * dv_shift_t;
 
-        printf(" IM3 after : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
-        printf("_______________________________________\n");
+        printf(" IM3 after  : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
 
         // Calculate new kinetic energy
         Real E_kin_new = cons(IM1,k,j,i)*cons(IM1,k,j,i);
@@ -416,9 +424,13 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
         E_kin_new     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
         E_kin_new     /= 2*cons(IDN,k,j,i);
 
+        printf(" E_kin_new  : (%d,%d,%d) %lf \n", k,j,i, E_kin_new);
+
         // Add the residual energy to total energy
         cons(IEN,k,j,i) = E_kin_new + E_th + E_mag;
 
+        printf(" E_tot_new  : (%d,%d,%d) %lf \n", k,j,i, cons(IEN,k,j,i) );
+        printf("_______________________________________\n");
       }
     }
   } // End of loop over Meshblock
