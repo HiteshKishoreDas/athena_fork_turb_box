@@ -346,6 +346,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   printf("front_posn_new = %lf \n", front_posn_new);
 
   //* Required shift velocity
+  // front_posn_old is set to 0.0
   v_shift_t_new = -1.0 * (front_posn_new-front_posn_old)/sim_dt;
 
   // For history output
@@ -389,10 +390,10 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
         printf(" E_tot_old  : (%d,%d,%d) %lf \n" , k,j,i, cons(IEN,k,j,i));
 
         // Calculate current kinetic energy
-        Real E_kin_old = cons(IM1,k,j,i)*cons(IM1,k,j,i);
-        E_kin_old     += cons(IM2,k,j,i)*cons(IM2,k,j,i);
-        E_kin_old     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
-        E_kin_old     /= 2*cons(IDN,k,j,i);
+        Real E_kin_old  = prim(IVX,k,j,i)*prim(IVX,k,j,i);
+        E_kin_old      += prim(IVY,k,j,i)*prim(IVY,k,j,i);
+        E_kin_old      += prim(IVZ,k,j,i)*prim(IVZ,k,j,i);
+        E_kin_old      *= 0.5*prim(IDN,k,j,i);
 
         printf(" E_kin_old : (%d,%d,%d) %lf \n"  , k,j,i, E_kin_old);
 
@@ -414,15 +415,20 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
         printf(" IM3  before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
 
         //! No issue occurs if this line is removed
-        cons(IM3,k,j,i) += cons(IDN,k,j,i) * dv_shift_t;
+        // cons(IM3,k,j,i) += prim(IDN,k,j,i) * dv_shift_t;
+        // cons(IM3,k,j,i) += prim(IDN,k,j,i) * v_shift_t_new;
+        cons(IM3,k,j,i) +=  v_shift_t_new;
+        // cons(IM3,k,j,i) += 0.01 * dv_shift_t;
+        // cons(IM3,k,j,i) += cons(IDN,k,j,i) * 1.0;
 
         printf(" IM3 after  : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
 
         // Calculate new kinetic energy
-        Real E_kin_new = cons(IM1,k,j,i)*cons(IM1,k,j,i);
-        E_kin_new     += cons(IM2,k,j,i)*cons(IM2,k,j,i);
-        E_kin_new     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
-        E_kin_new     /= 2*cons(IDN,k,j,i);
+        Real E_kin_new  = prim(IVX,k,j,i)*prim(IVX,k,j,i);
+        E_kin_new      += prim(IVY,k,j,i)*prim(IVY,k,j,i);
+        E_kin_new      += prim(IVZ,k,j,i)*prim(IVZ,k,j,i);
+        E_kin_new      /= 0.5*prim(IDN,k,j,i);
+
 
         printf(" E_kin_new  : (%d,%d,%d) %lf \n", k,j,i, E_kin_new);
 

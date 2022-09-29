@@ -1,2 +1,0 @@
-srun: Job step aborted: Waiting up to 62 seconds for job step to finish.
-slurmstepd: error: *** JOB 456119 ON freyag01 CANCELLED AT 2022-09-29T12:31:26 ***
