@@ -105,7 +105,7 @@ static Real B_y = 0.0;
 static Real B_z = 1.0;
 
 static Real front_posn_old = 0.0;
-static Real v_shift_t_old  = 0.0;
+// static Real v_shift_t_old  = 0.0;
 
 static bool cooling_flag_print_count = false;
 static bool DEBUG_FLAG_MIX = false;
@@ -307,18 +307,19 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   Real front_posn_new = 0.0;
   Real v_shift_t_new = 0.0;
-  Real dv_shift_t    = 0.0;
 
   Real sim_dt = pmb->pmy_mesh->dt;
 
+  Real g = pmb->peos->GetGamma();
+  Real c_s = sqrt( g*T_floor/(mu*KELVIN) );
 
   //* Calculate local meshblock cold mass
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
       for (int i = pmb->is; i <= pmb->ie; ++i) {
 
-        Real rho = pmb->phydro->u(IDN,k,j,i);
-        Real prs = pmb->phydro->w(IPR,k,j,i);
+        Real rho = prim(IDN,k,j,i);
+        Real prs = prim(IPR,k,j,i);
 
         Real temp = (prs / rho) * KELVIN * mu ;
 
@@ -335,32 +336,28 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   MPI_Allreduce(&local_cold_mass, &global_cold_mass, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
 
   printf("\n_______________________________________\n");
-  printf("global_cold_mass = %lf \n", global_cold_mass);
-  printf("local_cold_mass  = %lf \n", local_cold_mass);
+  printf("global_cold_mass = %lf \n"  , global_cold_mass);
+  printf("local_cold_mass  = %lf \n\n", local_cold_mass);
 
 
   //* New front position
   front_posn_new = x3min + global_cold_mass/(L1*L2 * amb_rho*T_hot/T_floor);
 
-  printf("front_posn_old = %lf \n", front_posn_old);
-  printf("front_posn_new = %lf \n", front_posn_new);
+  printf("L1             = %lf \n"  , L1);
+  printf("L2             = %lf \n"  , L2);
+  printf("x3min          = %lf \n\n", x3min);
+
+
+  printf("front_posn_old = %lf \n"  , front_posn_old);
+  printf("front_posn_new = %lf \n\n", front_posn_new);
 
   //* Required shift velocity
-  // front_posn_old is set to 0.0
   v_shift_t_new = -1.0 * (front_posn_new-front_posn_old)/sim_dt;
 
-  // For history output
-  front_velocity = -1.0*v_shift_t_new;
-
-  dv_shift_t = v_shift_t_new-v_shift_t_old;
-   
   printf("time           = %lf   \n", pmb->pmy_mesh->time);
   printf("dt             = %lf \n\n", sim_dt);
 
-  printf("v_shift_t_old  = %lf \n"  , v_shift_t_old );
   printf("v_shift_t_new  = %lf \n\n", v_shift_t_new );
-
-  printf("dv_shift_t     = %lf \n"  , dv_shift_t    );
   printf("front_velocity = %lf \n\n", front_velocity);
 
   printf("_______________________________________\n");
@@ -369,84 +366,97 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   //* If shift velocity is too high
   if ( (front_posn_new - v_shift_t_new*dt) < x3min ){
     v_shift_t_new *= 0.1;
-    dv_shift_t = v_shift_t_new-v_shift_t_old;
 
     printf("_______________________________________\n");
     printf("v_shift too high!... \n");
     printf("New v_shift: %lf \n", v_shift_t_new);
     printf("_______________________________________\n");
 
+  } else if (v_shift_t_new>c_s){
+    v_shift_t_new /=  abs(v_shift_t_new); //Calculate sign of v_shift
+    v_shift_t_new *=  c_s*0.8;
+
+    printf("_______________________________________\n");
+    printf("v_shift > c_s !... \n");
+    printf("New v_shift: %lf \n", v_shift_t_new);
+    printf("_______________________________________\n");
+
   }
 
+  // For history output
+  front_velocity = -1.0*v_shift_t_new;
   
 
   //* Add the shift velocity
-  for (int k = pmb->ks; k <= pmb->ke; ++k) {
-    for (int j = pmb->js; j <= pmb->je; ++j) {
-      for (int i = pmb->is; i <= pmb->ie; ++i) {
-
-        printf("_______________________________________\n");
-        printf(" rho       : (%d,%d,%d) %lf \n\n", k,j,i, cons(IDN,k,j,i));
-        printf(" E_tot_old  : (%d,%d,%d) %lf \n" , k,j,i, cons(IEN,k,j,i));
-
-        // Calculate current kinetic energy
-        Real E_kin_old  = prim(IVX,k,j,i)*prim(IVX,k,j,i);
-        E_kin_old      += prim(IVY,k,j,i)*prim(IVY,k,j,i);
-        E_kin_old      += prim(IVZ,k,j,i)*prim(IVZ,k,j,i);
-        E_kin_old      *= 0.5*prim(IDN,k,j,i);
-
-        printf(" E_kin_old : (%d,%d,%d) %lf \n"  , k,j,i, E_kin_old);
-
-
-        Real E_mag = 0.0;
-
-        if (MAGNETIC_FIELDS_ENABLED) {
-          E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
-          E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
-          E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
-          E_mag *= 0.5;
+  if (time != 0.0){
+    for (int k = pmb->ks; k <= pmb->ke; ++k) {
+      for (int j = pmb->js; j <= pmb->je; ++j) {
+        for (int i = pmb->is; i <= pmb->ie; ++i) {
+  
+          // printf("_______________________________________\n");
+          // printf(" rho        : (%d,%d,%d) %lf \n\n", k,j,i, cons(IDN,k,j,i));
+          // printf(" E_tot_old  : (%d,%d,%d) %lf \n" , k,j,i, cons(IEN,k,j,i));
+  
+          // Calculate current kinetic energy
+          Real E_kin_old  = SQR(prim(IVX,k,j,i));
+          E_kin_old      += SQR(prim(IVY,k,j,i));
+          E_kin_old      += SQR(prim(IVZ,k,j,i));
+          E_kin_old      *= 0.5*prim(IDN,k,j,i);
+  
+          // printf(" E_kin_old  : (%d,%d,%d) %lf \n"  , k,j,i, E_kin_old);
+  
+  
+          Real E_mag = 0.0;
+  
+          if (MAGNETIC_FIELDS_ENABLED) {
+            E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
+            E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
+            E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
+            E_mag *= 0.5;
+          }
+          // printf(" E_mag      : (%d,%d,%d) %lf \n", k,j,i, E_mag);
+  
+          Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
+          // printf(" E_th before: (%d,%d,%d) %lf \n\n", k,j,i, cons(IEN,k,j,i));
+  
+          // Modify momentum in x3
+          // printf(" IM3  before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
+  
+          //! No issue occurs if this line is removed
+          // cons(IM3,k,j,i) += prim(IDN,k,j,i) * dv_shift_t;
+  
+          cons(IM3,k,j,i) += prim(IDN,k,j,i) * v_shift_t_new;
+  
+          // cons(IM3,k,j,i) +=  v_shift_t_new;
+          // cons(IM3,k,j,i) += 0.01 * dv_shift_t;
+          // cons(IM3,k,j,i) += cons(IDN,k,j,i) * 1.0;
+  
+          // printf(" IM3 after  : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
+  
+          // Calculate new kinetic energy
+          Real E_kin_new  = SQR(prim(IVX,k,j,i));
+          E_kin_new      += SQR(prim(IVY,k,j,i));
+          E_kin_new      += SQR(prim(IVZ,k,j,i) + v_shift_t_new);
+          E_kin_new      *= 0.5*prim(IDN,k,j,i);
+  
+  
+          // printf(" E_kin_new  : (%d,%d,%d) %lf \n", k,j,i, E_kin_new);
+  
+          // Add the residual energy to total energy
+          cons(IEN,k,j,i) = E_kin_new + E_th + E_mag;
+  
+          // printf(" E_tot_new  : (%d,%d,%d) %lf \n", k,j,i, cons(IEN,k,j,i) );
+          // printf("_______________________________________\n");
         }
-        printf(" E_mag     : (%d,%d,%d) %lf \n", k,j,i, E_mag);
-
-        Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
-        printf(" E_th before: (%d,%d,%d) %lf \n\n", k,j,i, cons(IEN,k,j,i));
-
-        // Modify momentum in x3
-        printf(" IM3  before: (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
-
-        //! No issue occurs if this line is removed
-        // cons(IM3,k,j,i) += prim(IDN,k,j,i) * dv_shift_t;
-        // cons(IM3,k,j,i) += prim(IDN,k,j,i) * v_shift_t_new;
-        cons(IM3,k,j,i) +=  v_shift_t_new;
-        // cons(IM3,k,j,i) += 0.01 * dv_shift_t;
-        // cons(IM3,k,j,i) += cons(IDN,k,j,i) * 1.0;
-
-        printf(" IM3 after  : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
-
-        // Calculate new kinetic energy
-        Real E_kin_new  = prim(IVX,k,j,i)*prim(IVX,k,j,i);
-        E_kin_new      += prim(IVY,k,j,i)*prim(IVY,k,j,i);
-        E_kin_new      += prim(IVZ,k,j,i)*prim(IVZ,k,j,i);
-        E_kin_new      /= 0.5*prim(IDN,k,j,i);
-
-
-        printf(" E_kin_new  : (%d,%d,%d) %lf \n", k,j,i, E_kin_new);
-
-        // Add the residual energy to total energy
-        cons(IEN,k,j,i) = E_kin_new + E_th + E_mag;
-
-        printf(" E_tot_new  : (%d,%d,%d) %lf \n", k,j,i, cons(IEN,k,j,i) );
-        printf("_______________________________________\n");
       }
-    }
-  } // End of loop over Meshblock
-
+    } // End of loop over Meshblock
+  }
 
   // Update front position
-  // front_posn_old = front_posn_new;
+  front_posn_old = front_posn_new;
 
   // Update shift velocity
-  v_shift_t_old = v_shift_t_new;
+  // v_shift_t_old = v_shift_t_new;
 
   return;
 }
