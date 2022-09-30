@@ -312,6 +312,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   Real g = pmb->peos->GetGamma();
   Real c_s = sqrt( g*T_floor/(mu*KELVIN) );
+  Real c_s_cap = 0.0001;
 
   //* Calculate local meshblock cold mass
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
@@ -358,9 +359,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   printf("dt             = %lf \n\n", sim_dt);
 
   printf("v_shift_t_new  = %lf \n\n", v_shift_t_new );
-  printf("front_velocity = %lf \n\n", front_velocity);
 
-  printf("_______________________________________\n");
 
 
   //* If shift velocity is too high
@@ -372,9 +371,9 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
     printf("New v_shift: %lf \n", v_shift_t_new);
     printf("_______________________________________\n");
 
-  } else if (v_shift_t_new>c_s){
+  } else if (abs(v_shift_t_new) > (c_s_cap*c_s)){  // Comparison with cold gas sound speed
     v_shift_t_new /=  abs(v_shift_t_new); //Calculate sign of v_shift
-    v_shift_t_new *=  c_s*0.8;
+    v_shift_t_new *=  c_s*c_s_cap;
 
     printf("_______________________________________\n");
     printf("v_shift > c_s !... \n");
@@ -385,6 +384,8 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   // For history output
   front_velocity = -1.0*v_shift_t_new;
+  printf("front_velocity = %lf \n\n", front_velocity);
+  printf("_______________________________________\n");
   
 
   //* Add the shift velocity
@@ -424,7 +425,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   
           //! No issue occurs if this line is removed
           // cons(IM3,k,j,i) += prim(IDN,k,j,i) * dv_shift_t;
-  
+          // v_shift_t_new = 0.00003;
           cons(IM3,k,j,i) += prim(IDN,k,j,i) * v_shift_t_new;
   
           // cons(IM3,k,j,i) +=  v_shift_t_new;
@@ -453,7 +454,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   }
 
   // Update front position
-  front_posn_old = front_posn_new;
+  // front_posn_old = front_posn_new;
 
   // Update shift velocity
   // v_shift_t_old = v_shift_t_new;
