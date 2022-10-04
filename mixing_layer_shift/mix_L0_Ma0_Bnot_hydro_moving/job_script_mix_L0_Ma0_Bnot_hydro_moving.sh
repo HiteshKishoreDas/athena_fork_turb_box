@@ -4,11 +4,11 @@
 #SBATCH -o h000."%j".out
 #SBATCH -e h000."%j".err
 #SBATCH --mail-user hitesh@mpa-garching.mpg.de
-#SBATCH --partition=p.test
+#SBATCH --partition=p.24h
 #SBATCH --mail-type=ALL
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=40
-#SBATCH --time=00:25:00
+#SBATCH --time=12:55:00
 
 set -e
 SECONDS=0
@@ -26,7 +26,7 @@ module list
 
 cd /ptmp/mpa/hitesh/athena_fork_turb_box/mixing_layer_shift/mix_L0_Ma0_Bnot_hydro_moving/
 
-srun ./athena_mix -i athinput_mix_L0_Ma0_Bnot_hydro_moving -t 00:22:00
+srun ./athena_mix -i athinput_mix_L0_Ma0_Bnot_hydro_moving -t 12:52:00
 # srun ./athena -r Turb.final.rst -t 00:25:00
 
 echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"

@@ -86,7 +86,8 @@ static Real L3 = 0.0;
 
 static Real x3min = 0.0;
 
-static int cooling_flag = 1.0;
+static int cooling_flag = 1;
+static int shift_flag   = 1;
 
 static Real amb_rho = 1.0;
 
@@ -108,7 +109,11 @@ static Real front_posn_old = 0.0;
 // static Real v_shift_t_old  = 0.0;
 
 static bool cooling_flag_print_count = false;
+static bool shift_flag_print_count   = false;
+
 static bool DEBUG_FLAG_MIX = false;
+
+
 
 static Real debug_hst = 0.0;
 
@@ -123,7 +128,8 @@ void read_input (ParameterInput *pin){
 
   x3min = pin->GetReal("mesh","x3min");
 
-  cooling_flag    = pin->GetInteger("problem","cooling_flag");
+  cooling_flag = pin->GetInteger("problem","cooling_flag");
+  shift_flag   = pin->GetInteger("problem","shift_flag");
 
   amb_rho      = pin->GetReal("problem","amb_rho");
 
@@ -503,10 +509,23 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
             bcc, cons,
             cons_scalar);
 
+  }
+
+  if (shift_flag!=0){
+
+    if (!shift_flag_print_count){ 
+      printf("___________________________________________\n");
+      printf("!! Front shift included ...................\n");
+      printf("___________________________________________\n");
+
+      shift_flag_print_count = true;
+    }
+
     frame_shift(pmb, time, dt,
             prim, prim_scalar,
             bcc, cons,
             cons_scalar);
+
   }
 
   return;
@@ -562,7 +581,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
-    EnrollUserHistoryOutput(5, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(5, hst_front_velocity, "front_velocity", UserHistoryOperation::max);
     EnrollUserHistoryOutput(6, hst_debug, "total_debug");
 
   }

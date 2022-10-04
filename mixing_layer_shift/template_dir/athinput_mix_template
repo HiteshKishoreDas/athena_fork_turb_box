@@ -70,6 +70,7 @@ DEBUG_FLAG = 0
 cloud_flag   = 0
 
 cooling_flag = 1                # 0 for no cooling and >0 for cooling
+shift_flag   = !!SHIFT_FLAG!!   # 0 for no adaptive shift and >0 for otherwise
 
 amb_rho      = !!AMB_RHO!!      # Density of the ambient medium
 
