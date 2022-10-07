@@ -101,7 +101,7 @@ cloud_flag   = 0  # 1 for a cloud and 0 for no cloud
                   # Cloud_init() is added(not added) to Source() depending on the flag 
 
 # Magnetic field flag
-B_flag       = 0  # 1 for adding magnetic fields
+B_flag       = 1  # 1 for adding magnetic fields
 
 # Ma = np.array([0.1, 10])
 Ma = np.array([10])

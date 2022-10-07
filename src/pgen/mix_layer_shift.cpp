@@ -32,6 +32,7 @@
 #include "../mesh/mesh.hpp"
 #include "../parameter_input.hpp"
 #include "../utils/utils.hpp"
+#include "../scalars/scalars.hpp"
 
 //! Remove if not required
 // #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
@@ -183,15 +184,19 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real g = pmb->peos->GetGamma();
 
-  Real sim_time = pmb->pmy_mesh->time;
+  // Real sim_time = pmb->pmy_mesh->time;
 
-  for (int k = pmb->ks; k <= pmb->ke; ++k) {
-    for (int j = pmb->js; j <= pmb->je; ++j) {
-      for (int i = pmb->is; i <= pmb->ie; ++i) {
+  int il = pmb->is - NGHOST; int iu = pmb->ie + NGHOST;
+  int jl = pmb->js - NGHOST; int ju = pmb->je + NGHOST;
+  int kl = pmb->ks - NGHOST; int ku = pmb->ke + NGHOST;
+
+  for (int k = kl; k <= ku; ++k) {
+    for (int j = jl; j <= ju; ++j) {
+      for (int i = il; i <= iu; ++i) {
 
         debug_hst += 1.0;
 
-        Real temp = (prim(IPR,k,j,i) / cons(IDN,k,j,i)) * KELVIN * mu ;
+        Real temp = (prim(IPR,k,j,i) / prim(IDN,k,j,i)) * KELVIN * mu ;
 
         //TODO: Move NaN checks to Cooling header file
         if (std::isnan(temp)) {
@@ -203,10 +208,10 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
           printf("IM2  = %lf \n", cons(IM2,k,j,i)); 
           printf("IM3  = %lf \n", cons(IM3,k,j,i)); 
 
-          Real E_kin = cons(IM1,k,j,i)*cons(IM1,k,j,i);
-          E_kin     += cons(IM2,k,j,i)*cons(IM2,k,j,i);
-          E_kin     += cons(IM3,k,j,i)*cons(IM3,k,j,i);
-          E_kin     /= 2*cons(IDN,k,j,i);
+          Real E_kin  = SQR(prim(IVX,k,j,i));
+          E_kin      += SQR(prim(IVY,k,j,i));
+          E_kin      += SQR(prim(IVZ,k,j,i));
+          E_kin      *= 0.5*prim(IDN,k,j,i);
 
           Real E_mag = 0.0;
 
@@ -318,7 +323,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   Real g = pmb->peos->GetGamma();
   Real c_s = sqrt( g*T_floor/(mu*KELVIN) );
-  Real c_s_cap = 0.0001;
+  Real c_s_cap = 0.01;
 
   //* Calculate local meshblock cold mass
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
@@ -342,29 +347,29 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   //* Calculate total cold mass
   MPI_Allreduce(&local_cold_mass, &global_cold_mass, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
 
-  printf("\n_______________________________________\n");
-  printf("global_cold_mass = %lf \n"  , global_cold_mass);
-  printf("local_cold_mass  = %lf \n\n", local_cold_mass);
+  // printf("\n_______________________________________\n");
+  // printf("global_cold_mass = %lf \n"  , global_cold_mass);
+  // printf("local_cold_mass  = %lf \n\n", local_cold_mass);
 
 
   //* New front position
   front_posn_new = x3min + global_cold_mass/(L1*L2 * amb_rho*T_hot/T_floor);
 
-  printf("L1             = %lf \n"  , L1);
-  printf("L2             = %lf \n"  , L2);
-  printf("x3min          = %lf \n\n", x3min);
+  // printf("L1             = %lf \n"  , L1);
+  // printf("L2             = %lf \n"  , L2);
+  // printf("x3min          = %lf \n\n", x3min);
 
 
-  printf("front_posn_old = %lf \n"  , front_posn_old);
-  printf("front_posn_new = %lf \n\n", front_posn_new);
+  // printf("front_posn_old = %lf \n"  , front_posn_old);
+  // printf("front_posn_new = %lf \n\n", front_posn_new);
 
   //* Required shift velocity
   v_shift_t_new = -1.0 * (front_posn_new-front_posn_old)/sim_dt;
 
-  printf("time           = %lf   \n", pmb->pmy_mesh->time);
-  printf("dt             = %lf \n\n", sim_dt);
+  // printf("time           = %lf   \n", pmb->pmy_mesh->time);
+  // printf("dt             = %lf \n\n", sim_dt);
 
-  printf("v_shift_t_new  = %lf \n\n", v_shift_t_new );
+  // printf("v_shift_t_new  = %lf \n\n", v_shift_t_new );
 
 
 
@@ -390,40 +395,59 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   // For history output
   front_velocity = -1.0*v_shift_t_new;
-  printf("front_velocity = %lf \n\n", front_velocity);
+  // printf("front_velocity = %lf \n\n", front_velocity);
   printf("_______________________________________\n");
-  
+
+  // int il = pmb->is; // - NGHOST;
+  int il = pmb->is - NGHOST;
+  int iu = pmb->ie + NGHOST;
+
+  // int jl = pmb->js; // - NGHOST;
+  int jl = pmb->js- NGHOST;
+  int ju = pmb->je + NGHOST;
+
+  // int kl = pmb->ks; // - NGHOST;
+  int kl = pmb->ks- NGHOST;
+  int ku = pmb->ke + NGHOST;
+
+  printf("(is,ie): %d %d  \n", pmb->is, pmb->ie);
+  printf("(js,je): %d %d  \n", pmb->js, pmb->je);
+  printf("(ks,ke): %d %d  \n", pmb->ks, pmb->ke);
+  printf("_______________________________________\n");
+  printf("(il,iu): %d %d  \n", il, iu);
+  printf("(jl,ju): %d %d  \n", jl, ju);
+  printf("(kl,ku): %d %d  \n", kl, ku);
+  printf("_______________________________________\n");
+  printf("_______________________________________\n");
 
   //* Add the shift velocity
   if (time != 0.0){
-    for (int k = pmb->ks; k <= pmb->ke; ++k) {
-      for (int j = pmb->js; j <= pmb->je; ++j) {
-        for (int i = pmb->is; i <= pmb->ie; ++i) {
+    for (int k = kl; k <= ku; ++k) {
+      for (int j = jl; j <= ju; ++j) {
+        for (int i = il; i <= iu; ++i) {
   
           // printf("_______________________________________\n");
           // printf(" rho        : (%d,%d,%d) %lf \n\n", k,j,i, cons(IDN,k,j,i));
           // printf(" E_tot_old  : (%d,%d,%d) %lf \n" , k,j,i, cons(IEN,k,j,i));
   
           // Calculate current kinetic energy
-          Real E_kin_old  = SQR(prim(IVX,k,j,i));
-          E_kin_old      += SQR(prim(IVY,k,j,i));
-          E_kin_old      += SQR(prim(IVZ,k,j,i));
-          E_kin_old      *= 0.5*prim(IDN,k,j,i);
+          // Real E_kin_old  = SQR(prim(IVZ,k,j,i));
+          // E_kin_old      *= 0.5*prim(IDN,k,j,i);
   
           // printf(" E_kin_old  : (%d,%d,%d) %lf \n"  , k,j,i, E_kin_old);
   
   
-          Real E_mag = 0.0;
+          // Real E_mag = 0.0;
   
-          if (MAGNETIC_FIELDS_ENABLED) {
-            E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
-            E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
-            E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
-            E_mag *= 0.5;
-          }
+          // if (MAGNETIC_FIELDS_ENABLED) {
+          //   E_mag += prim(IB1,k,j,i)*prim(IB1,k,j,i);
+          //   E_mag += prim(IB2,k,j,i)*prim(IB2,k,j,i);
+          //   E_mag += prim(IB3,k,j,i)*prim(IB3,k,j,i);
+          //   E_mag *= 0.5;
+          // }
           // printf(" E_mag      : (%d,%d,%d) %lf \n", k,j,i, E_mag);
   
-          Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
+          // Real E_th = cons(IEN,k,j,i) - E_kin_old - E_mag;
           // printf(" E_th before: (%d,%d,%d) %lf \n\n", k,j,i, cons(IEN,k,j,i));
   
           // Modify momentum in x3
@@ -431,7 +455,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   
           //! No issue occurs if this line is removed
           // cons(IM3,k,j,i) += prim(IDN,k,j,i) * dv_shift_t;
-          // v_shift_t_new = 0.00003;
+          v_shift_t_new = c_s*c_s_cap ;
           cons(IM3,k,j,i) += prim(IDN,k,j,i) * v_shift_t_new;
   
           // cons(IM3,k,j,i) +=  v_shift_t_new;
@@ -441,16 +465,15 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
           // printf(" IM3 after  : (%d,%d,%d) %lf \n", k,j,i, cons(IM3,k,j,i));
   
           // Calculate new kinetic energy
-          Real E_kin_new  = SQR(prim(IVX,k,j,i));
-          E_kin_new      += SQR(prim(IVY,k,j,i));
-          E_kin_new      += SQR(prim(IVZ,k,j,i) + v_shift_t_new);
-          E_kin_new      *= 0.5*prim(IDN,k,j,i);
-  
-  
+          // Real E_kin_new  = SQR(prim(IVZ,k,j,i) + v_shift_t_new);
+          // E_kin_new      *= 0.5*prim(IDN,k,j,i);
+
           // printf(" E_kin_new  : (%d,%d,%d) %lf \n", k,j,i, E_kin_new);
-  
+
+          Real dE_kin = SQR(prim(IVZ,k,j,i)+v_shift_t_new) - SQR(prim(IVZ,k,j,i));
+
           // Add the residual energy to total energy
-          cons(IEN,k,j,i) = E_kin_new + E_th + E_mag;
+          cons(IEN,k,j,i) += 0.5 * prim(IDN,k,j,i) * dE_kin ;
   
           // printf(" E_tot_new  : (%d,%d,%d) %lf \n", k,j,i, cons(IEN,k,j,i) );
           // printf("_______________________________________\n");
@@ -657,6 +680,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         x1f = pcoord->x1f(i);   
         
         phydro->u(IDN,k,j,i) = rho_cold + (0.5*(amb_rho - rho_cold)) * (1 + tanh(x3/front_thick));
+        pscalars->s(0,k,j,i) = 1.0      + (0.5*(0.0     - 1.0     )) * (1 + tanh(x3/front_thick));
 
         phydro->u(IM1,k,j,i) = phydro->u(IDN,k,j,i) * (v_shear/2) * (1 + tanh(x3/front_thick));
         phydro->u(IM2,k,j,i) = 0.0;
