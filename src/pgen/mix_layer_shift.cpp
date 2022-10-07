@@ -323,7 +323,7 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
 
   Real g = pmb->peos->GetGamma();
   Real c_s = sqrt( g*T_floor/(mu*KELVIN) );
-  Real c_s_cap = 0.01;
+  Real c_s_cap = 0.1;
 
   //* Calculate local meshblock cold mass
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
@@ -347,9 +347,13 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   //* Calculate total cold mass
   MPI_Allreduce(&local_cold_mass, &global_cold_mass, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
 
-  // printf("\n_______________________________________\n");
+  printf("\n_______________________________________\n");
   // printf("global_cold_mass = %lf \n"  , global_cold_mass);
   // printf("local_cold_mass  = %lf \n\n", local_cold_mass);
+
+  printf("Meshblock: %ld \n", pmb->gid);
+  printf("time     : %f \n", time);
+  printf("\n_______________________________________\n");
 
 
   //* New front position
@@ -396,29 +400,32 @@ void frame_shift(MeshBlock *pmb, const Real time, const Real dt,
   // For history output
   front_velocity = -1.0*v_shift_t_new;
   // printf("front_velocity = %lf \n\n", front_velocity);
-  printf("_______________________________________\n");
+  // printf("_______________________________________\n");
 
-  // int il = pmb->is; // - NGHOST;
-  int il = pmb->is - NGHOST;
-  int iu = pmb->ie + NGHOST;
+  int il = pmb->is;
+  // int il = pmb->is - NGHOST;
+  int iu = pmb->ie;
+  // int iu = pmb->ie + NGHOST;
 
-  // int jl = pmb->js; // - NGHOST;
-  int jl = pmb->js- NGHOST;
-  int ju = pmb->je + NGHOST;
+  int jl = pmb->js;
+  // int jl = pmb->js- NGHOST;
+  int ju = pmb->je;
+  // int ju = pmb->je + NGHOST;
 
-  // int kl = pmb->ks; // - NGHOST;
-  int kl = pmb->ks- NGHOST;
-  int ku = pmb->ke + NGHOST;
+  int kl = pmb->ks;
+  // int kl = pmb->ks- NGHOST;
+  int ku = pmb->ke;
+  // int ku = pmb->ke + NGHOST;
 
-  printf("(is,ie): %d %d  \n", pmb->is, pmb->ie);
-  printf("(js,je): %d %d  \n", pmb->js, pmb->je);
-  printf("(ks,ke): %d %d  \n", pmb->ks, pmb->ke);
-  printf("_______________________________________\n");
-  printf("(il,iu): %d %d  \n", il, iu);
-  printf("(jl,ju): %d %d  \n", jl, ju);
-  printf("(kl,ku): %d %d  \n", kl, ku);
-  printf("_______________________________________\n");
-  printf("_______________________________________\n");
+  // printf("(is,ie): %d %d  \n", pmb->is, pmb->ie);
+  // printf("(js,je): %d %d  \n", pmb->js, pmb->je);
+  // printf("(ks,ke): %d %d  \n", pmb->ks, pmb->ke);
+  // printf("_______________________________________\n");
+  // printf("(il,iu): %d %d  \n", il, iu);
+  // printf("(jl,ju): %d %d  \n", jl, ju);
+  // printf("(kl,ku): %d %d  \n", kl, ku);
+  // printf("_______________________________________\n");
+  // printf("_______________________________________\n");
 
   //* Add the shift velocity
   if (time != 0.0){

@@ -7,7 +7,7 @@
 #SBATCH --partition=p.test
 #SBATCH --mail-type=ALL
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=40
+#SBATCH --ntasks-per-node=1
 #SBATCH --time=00:25:00
 
 set -e
