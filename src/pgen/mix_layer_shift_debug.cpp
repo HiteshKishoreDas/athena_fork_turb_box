@@ -361,7 +361,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         x1 = pcoord->x1v(i);
         x1f = pcoord->x1f(i);   
         
-        phydro->u(IDN,k,j,i) = amb_rho ;
+        phydro->u(IDN,k,j,i) = rho_cold ;
 
         phydro->u(IM1,k,j,i) = 0.0;
         phydro->u(IM2,k,j,i) = 0.0;

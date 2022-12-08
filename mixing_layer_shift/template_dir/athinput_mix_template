@@ -78,6 +78,7 @@ front_thickness = !!FRONT_TH!!  # thickness of the interface
 v_shear         = !!V_SHEAR!!   # Shear velocity
 
 v_shift      = !!V_SHIFT!!    # Frame shift for the simulation in z
+shift_start  = !!SHIFT_START!!    # Start time for the frame shift
 
 knx_KH       = !!KNX_KH!!
 kny_KH       = !!KNY_KH!!
