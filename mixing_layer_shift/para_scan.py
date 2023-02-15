@@ -78,17 +78,17 @@ cloud_radius = R_lsh*l_sh
 # box_width  = 0.1 * np.array([100000.0, 50000.0, 10000.0, 5000.0, 1000.0, 500.0, 100.0, 50.0, 10.0, 5.0, 1.0, 0.5, 0.1])
 # box_width  = 0.1 * np.array([10000.0, 1000.0, 100.0, 10.0, 1.0, 0.1, 0.01, 0.001, 0.0001])
 # box_width  = 0.1 * np.array([10000.0, 1.0, 0.0001])
-box_width  = 0.1 * np.array([10000.0, 10000.0, \
-                             100.0  , 100.0  , \
-                             1.0    , 1.0    , \
-                             0.001  , 0.001  , \
-                             0.0001 , 0.0001   ])
+box_width  = 0.5* 0.1 * np.array([10000.0, \
+                             100.0  , \
+                             1.0    , \
+                             0.001  , \
+                             0.0001   ])
 
-shift_flag = np.array([1, 0, \
-                       1, 0, \
-                       1, 0, \
-                       1, 0, \
-                       1, 0  ])
+# shift_flag = np.array([1, 0, \
+#                        1, 0, \
+#                        1, 0, \
+#                        1, 0, \
+#                        1, 0  ])
 
 box_length = 10*box_width 
 
@@ -102,6 +102,7 @@ cloud_flag   = 0  # 1 for a cloud and 0 for no cloud
 
 # Magnetic field flag
 B_flag       = 1  # 1 for adding magnetic fields
+shift_flag   = 1
 
 # Ma = np.array([0.1, 10])
 Ma = np.array([10])
@@ -132,16 +133,20 @@ nx3_mesh = np.array([32])
 # Initial profile settings 
 
 front_thickness = box_width/20
-v_shear         = 0.1022   # M*vt.cs_calc(T_hot,mu)
+v_shear         = 0.5* 0.1022   # M*vt.cs_calc(T_hot,mu)
 # M  = 0.5     # Required Mach number
 M = v_shear/vt.cs_calc(T_hot, g.mu)     # Required Mach number
 
-v_m = 0.00238
-v_b = 0.00390
+
+shift_start= 10*t_cool_mix
+
+# v_m = 0.00238
+# v_b = 0.00390
 
 # v_shift = -0.01 * (box_width/box_width[4])
 # v_shift  = v_m*np.log10(box_width) + v_b
 # v_shift *= -1.0
+
 v_shift = 0.0
 
 knx_KH = 1.0
@@ -220,15 +225,15 @@ time_limit_rst = ["12:52:00"] #["02:45:00","11:45:00"]#,"23:35:00"]
 def filename_mix_add (i,j,k):
 
     if B_flag:
-        return f'_L{i}_Ma{j}_B{k}_moving'
+        return f'_L{i}_Ma{j}_B{k}'
     else:
-        return f'_L{i}_Ma{j}_Bnot_hydro_moving'
+        return f'_L{i}_Ma{j}_Bnot_hydro'
     # return f'_res_256_Rlsh_0'
 
 #* For access to plotting scripts
 def filename_mix_add_ext (i, j, k, MHD_flag):
 
     if MHD_flag:
-        return f'_L{i}_Ma{j}_B{k}_moving'
+        return f'_L{i}_Ma{j}_B{k}'
     else:
-        return f'_L{i}_Ma{j}_Bnot_hydro_moving'
+        return f'_L{i}_Ma{j}_Bnot_hydro'

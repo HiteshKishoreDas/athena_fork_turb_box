@@ -40,7 +40,8 @@ def athinput_replace(template_data,i,j,k):
     template_data = tag_replace(template_data,"!!V_SHEAR!!" ,ps.v_shear)
     template_data = tag_replace(template_data,"!!V_SHIFT!!" ,ps.v_shift)
 
-    template_data = tag_replace(template_data,"!!SHIFT_FLAG!!",ps.shift_flag[i])
+    template_data = tag_replace(template_data,"!!SHIFT_FLAG!!",ps.shift_flag)
+    template_data = tag_replace(template_data,"!!SHIFT_START!!",ps.shift_start[0])
 
     template_data = tag_replace(template_data,"!!KNX_KH!!",ps.knx_KH)
     template_data = tag_replace(template_data,"!!KNY_KH!!",ps.kny_KH)
