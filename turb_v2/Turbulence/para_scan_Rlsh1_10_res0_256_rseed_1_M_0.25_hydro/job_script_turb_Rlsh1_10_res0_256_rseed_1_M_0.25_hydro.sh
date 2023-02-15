@@ -25,9 +25,10 @@ module list
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$I_MPI_ROOT/intel64/lib/release/
 
-cd /ptmp/hitesh/athena_fork_turb_box/turb_v2/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/
+cd /ptmp/hitesh/athena_fork_turb_box/turb_v2/Turbulence/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/
 
-srun ./athena_turb -i athinput_turb_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro.turb -t 23:35:00
+# srun ./athena_turb -i athinput_turb_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro.turb -t 23:35:00
+srun ./athena_turb -i athinput_turb_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro.turb -r Turb.final.rst -t 23:35:00
 
 echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
 
