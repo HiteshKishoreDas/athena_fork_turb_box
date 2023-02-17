@@ -27,10 +27,11 @@ module list
 
 cd /ptmp/hitesh/athena_fork_turb_box/turb_v2/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_chi_100_hydro/
 
-cp ../para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/Turb.hst ./
-mv ../para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro ../Turbulence/
+# cp ../Turbulence/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/Turb.hst ./
+# mv ../para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro ../Turbulence/
 
-srun ./athena_turb -r ../Turbulence/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/Turb.final.rst -i athinput_cloud_Rlsh1_10_res0_256_rseed_1_M_0.25_chi_100_hydro.turb -t 23:55:00
+# srun ./athena_turb -r ../Turbulence/para_scan_Rlsh1_10_res0_256_rseed_1_M_0.25_hydro/Turb.final.rst -i athinput_cloud_Rlsh1_10_res0_256_rseed_1_M_0.25_chi_100_hydro.turb -t 23:55:00
+srun ./athena_turb -r Turb.final.rst -i athinput_cloud_Rlsh1_10_res0_256_rseed_1_M_0.25_chi_100_hydro.turb problem/cloud_flag=0 -t 23:55:00
 
 echo "Elapsed: $(($SECONDS / 3600))hrs $((($SECONDS / 60) % 60))min $(($SECONDS % 60))sec"
 
