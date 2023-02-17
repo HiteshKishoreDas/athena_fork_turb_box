@@ -46,6 +46,8 @@ Xsol = 1.0;
 
 X = Xsol * 0.7381;
 Z = Zsol * 0.0134;
+# X = Xsol * 0.7;
+# Z = Zsol * 0.02;
 Y = 1 - X - Z;
 
 mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.)
@@ -59,10 +61,10 @@ mH  = 1.0
 
 R_lsh = np.array([1000])     # For M = 0.5
 
-t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Z_sol)
-t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(cloud_chi_temp),np.sqrt(T_floor*T_hot_req),Z_sol)
-t_cool_amb   = cf.tcool_calc(amb_rho,T_hot_req,Z_sol)
-t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot_req,Z_sol)
+t_cool_cloud = cf.tcool_calc(amb_rho*cloud_chi_temp,T_floor,Zsol)
+t_cool_mix   = cf.tcool_calc(amb_rho*np.sqrt(cloud_chi_temp),np.sqrt(T_floor*T_hot_req),Zsol)
+t_cool_amb   = cf.tcool_calc(amb_rho,T_hot_req,Zsol)
+t_cool_cut   = cf.tcool_calc(amb_rho/T_cut_mul,T_cut_mul*T_hot_req,Zsol)
 
 
 l_sh = vt.cs_calc(T_floor,mu)*t_cool_cloud

@@ -15,14 +15,27 @@ g = 5/3
 T_floor = 10000.0
 T_ceil = 1e8
 
-X = 1.0
-Y = 0.0
-Z = 0.0
+Xsol = 1.0
+Zsol = 1.0
 
-mu = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.)
-mue = 2.0/(1.0+X)
-muH = 1.0/X
+X = Xsol * 0.7381
+Z = Zsol * 0.0134
+Y = 1 - X - Z
+
+mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
+mue = 2.0/(1.0+X);
+muH = 1.0/X;
+
 mH = 1.0
+
+# X = 1.0
+# Y = 0.0
+# Z = 0.0
+
+# mu = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.)
+# mue = 2.0/(1.0+X)
+# muH = 1.0/X
+# mH = 1.0
 
 
 @derived_field(name="temp", units="code_length**3*code_pressure/code_mass", \

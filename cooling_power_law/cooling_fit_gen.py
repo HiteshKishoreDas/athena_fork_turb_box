@@ -85,7 +85,7 @@ if __name__=="__main__":
 
     T_min,T_max = cf.Lam_range()
 
-    N_bin = 5
+    N_bin = 40 
     bin_n = 100
     Z = 1.0 # Solar metallicity
 

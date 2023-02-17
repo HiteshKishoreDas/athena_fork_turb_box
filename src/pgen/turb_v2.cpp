@@ -411,6 +411,10 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   l_shatter     *= sound_speed ;
   l_shatter     /= unit_length;
 
+
+  //! Change t_cool,cold to t_cool,floor
+  //! T_floor is different from T_cold (=2*T_floor usually), which is a cutoff temp
+  //! Can be very confusing...
   stringstream msg;
   if(gid == 0) {
     msg << "[pgen] unit_time = " << unit_time << ", unit_rho = " << unit_density 
