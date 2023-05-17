@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-(cd ../../../ && make -j3)
-cp ../../../bin/athena ../athena_mix

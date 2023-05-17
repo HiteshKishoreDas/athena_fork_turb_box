@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-(cd scripts && ./turb_conf)
-(cd scripts && ./turb_clean)
-(cd scripts && ./turb_make)
