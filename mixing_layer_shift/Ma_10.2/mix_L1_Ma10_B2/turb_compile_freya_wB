@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-(cd scripts && ./turb_conf_freya_wB)
-(cd scripts && ./turb_clean)
-(cd scripts && ./turb_make)

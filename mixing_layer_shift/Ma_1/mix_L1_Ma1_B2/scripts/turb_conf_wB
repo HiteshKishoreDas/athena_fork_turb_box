@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-(cd ../../../ && ./configure.py --prob mix_layer_shift -b -fft -mpi -hdf5 -h5double)
