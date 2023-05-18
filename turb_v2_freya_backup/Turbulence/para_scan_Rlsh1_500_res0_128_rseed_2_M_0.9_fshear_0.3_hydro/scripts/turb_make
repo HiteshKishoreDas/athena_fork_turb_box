@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-(cd ../../../../ && make -j5)
-cp ../../../../bin/athena ../athena_turb
