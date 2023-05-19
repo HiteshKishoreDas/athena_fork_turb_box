@@ -1,10 +1,10 @@
 import numpy as np
-import v_turb as vt
+import turb_template.template_dir.v_turb as vt
 
 # import sys
 import os
 
-import globals as g
+import turb_template.template_dir.globals as g
 import sys
 
 cwd = os.getcwd()

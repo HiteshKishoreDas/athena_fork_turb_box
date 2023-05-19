@@ -1,0 +1,109 @@
+<comment>
+problem   = Stir turbulence
+configure = --prob=turb_v2 -fft 
+
+<job>
+problem_id = Turb              # problem ID: basename of output filenames
+
+<output1>
+file_type  = hst               # History data dump
+dt         = !!HST_DT_TURB!!   # time increment between outputs
+
+<output2>
+file_type = hdf5               # HDF5 data dump
+variable  = prim               # variables to be output
+dt        = !!OUT_DT_TURB!!    # time increment between outputs
+
+<output3>
+file_type = rst                # restart file dump                 
+dt        = !!RST_DT_TURB!!    # time increment between outputs
+
+<output4>
+file_type   = hdf5             # HDF5 data dump
+dt          = !!USER_DT_TURB!! # User-defined output (luminosity)
+variable    = user_out_var     # time increment between outputs
+
+<time>
+cfl_number  = 0.3              # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim        = -1               # cycle limit
+tlim        = !!TLIM_TURB!!    # time limit
+integrator  = rk2              # time integration algorithm
+xorder      = 2                # order of spatial reconstruction
+ncycle_out  = 1                # interval for stdout summary info
+
+<mesh>
+nx1    = !!NX1!!               # number of zones in x1-direction
+x1min  = !!X1MIN!!             # minimum value of x1
+x1max  = !!X1MAX!!             # maximum value of x1
+ix1_bc = periodic              # inner-x1 boundary condition
+ox1_bc = periodic              # outer-x1 boundary condition
+
+nx2    = !!NX2!!               # number of zones in x2-direction
+x2min  = !!X2MIN!!             # minimum value of x2
+x2max  = !!X2MAX!!             # maximum value of x2
+ix2_bc = periodic              # inner-x2 boundary condition
+ox2_bc = periodic              # outer-x2 boundary condition
+
+nx3    = !!NX3!!               # number of zones in x3-direction
+x3min  = !!X3MIN!!             # minimum value of x3
+x3max  = !!X3MAX!!             # maximum value of x3
+ix3_bc = periodic              # inner-x3 boundary condition
+ox3_bc = periodic              # outer-x3 boundary condition
+
+refinement  = none             # type of mesh refinement to use
+
+<meshblock>
+nx1 = !!NX1_MESH!!             # block size in x1-direction
+nx2 = !!NX2_MESH!!             # block size in x2-direction
+nx3 = !!NX3_MESH!!             # block size in x3-direction
+
+<hydro>
+gamma      = 1.6666666666666667  # gamma = C_p/C_v
+pfloor     = !!P_FLOOR!!         # pressure floor
+
+<turbulence>
+dedt       = !!DEDT!!      # Energy injection rate (for driven) or Total energy (for decaying)
+nlow       = 0             # cut-off wavenumber at low-k
+nhigh      = 2             # cut-off wavenumber at high-k
+expo       = 2.0           # power-law exponent
+tcorr      = !!T_CORR!!    # correlation time for OU process (both impulsive and continuous)
+dtdrive    = !!DT_DRIVE!!  # time interval between perturbation (impulsive)
+f_shear    = !!F_SHEAR!!   # the ratio of the shear component
+rseed      = !!RSEED!!     # if non-negative, seed will be set by hand (slow PS generation)
+
+# tcorr ~ t_eddy
+# dtdrive << t_eddy
+
+<problem>
+
+turb_flag    = 2    # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
+
+# User-defined variables:
+
+cooling_flag = 0                # set to 1 to turn on cooling, 0 to turn it off
+cloud_flag   = 0                # set to 1 to add the cloud on restart, 0 to not  
+
+amb_rho      = !!AMB_RHO!!      # ambient density, in code units
+
+cloud_radius = !!CLOUD_RADIUS!! # cloud radius, in code units
+cloud_time   = !!CLOUD_TIME!!   # time of insertion of cloud, in code units
+cloud_chi    = !!CLOUD_CHI!!    # density contrast of the cloud
+
+T_floor      = !!T_FLOOR!!      # floor temperature in the simulation
+T_ceil       = !!T_CEIL!!       # ceiling temperature in the simulation
+T_hot_req    = !!T_HOT_REQ!!    # hot medium temperature required, reset to this on restart, if cloud_flag is 1
+T_hot        = !!T_HOT!!        # initial hot medium temperature (box heats up due to turbulence)
+T_cold       = !!T_COLD!!       # cold medium temperature, used in cold gas mass calculation
+T_cut_mul    = !!T_CUT_MUL!!    # T_cut = T_hot_req * T_cut_mul, gas higher than T_cut is not cooled
+T_cut        = !!T_CUT!!        # gas higher than T_cut is not cooled
+
+Xsol         = !!XSOL!!         # H-abundance in solar abundance
+Zsol         = !!ZSOL!!         # metallicity in solar abundance
+
+cloud_pos_x  = !!CLOUD_POS_X!!  # cloud center position x-coordinate
+cloud_pos_y  = !!CLOUD_POS_Y!!  # cloud center position y-coordinate
+cloud_pos_z  = !!CLOUD_POS_Z!!  # cloud center position z-coordinate
+
+B_x          = !!B_X!!          # magnetic field in x-direction
+B_y          = !!B_Y!!          # magnetic field in y-direction
+B_z          = !!B_Z!!          # magnetic field in z-direction

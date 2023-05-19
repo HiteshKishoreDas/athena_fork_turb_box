@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import globals as g
+import turb_template.template_dir.globals as g
 
 alpha_hyd = 2 ** (1 / 3)  # 1.26 # 1.383
 alpha_mhd = (2 * 4.2 / 0.77) ** (1 / 3)

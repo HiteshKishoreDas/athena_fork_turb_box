@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# (cd scripts && ./turb_conf_freya_wB)
+# (cd scripts && ./turb_clean)
+# (cd scripts && ./turb_make)
+
+# Configure the code with magnetic fields
+(cd $ATHENA_DIR && 
+./configure.py \
+--prob turb_v2 \
+# -b  \
+-fft -mpi  \
+-hdf5 -h5double  \
+--mpiccmd mpiicc  \
+--include=$FFTW_HOME/include  \
+--include=$HDF5_HOME/include  \
+--lib_path=$FFTW_HOME/lib  \
+--lib_path=$HDF5_HOME/lib  \
+--cflag="-xCORE-AVX512  \
+-qopt-zmm-usage=high  \
+-inline-forceinline  \
+-qopenmp-simd   \
+-qopt-prefetch=4  \
+-qoverride-limits  \
+-diag-disable 3180  \
+-Wl,-rpath=$FFTW_HOME/lib  \
+-Wl,-rpath=$HDF5_HOME/lib")
+
+# Clean up the compiled output
+(cd $ATHENA_DIR && make clean)
+
+# Compile
+(cd $ATHENA_DIR && make -j5)
+
+# Copy the compiled binary file to current directory
+cp $ATHENA_DIR/bin/athena athena_turb
