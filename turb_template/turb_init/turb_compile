@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 
-# (cd scripts && ./turb_conf_freya_wB)
-# (cd scripts && ./turb_clean)
-# (cd scripts && ./turb_make)
-
-# Configure the code with magnetic fields
+# Configure the code
 (cd $ATHENA_DIR && 
 ./configure.py \
 --prob turb_v2 \
-# -b  \
+# -b  \                   # Uncomment this line to add magnetic fields
 -fft -mpi  \
 -hdf5 -h5double  \
 --mpiccmd mpiicc  \
