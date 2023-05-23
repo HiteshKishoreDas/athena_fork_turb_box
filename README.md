@@ -1,6 +1,11 @@
 # athena_fork_turb_box
 Athena++ fork for Turbulent box project
 
+Instructions:
+
+- Set $ATHEMA_DIR path variable to the Athena++ root directory
+
+
 TODO:
 (P1-4 -> Priority, P1-> Highest)
 

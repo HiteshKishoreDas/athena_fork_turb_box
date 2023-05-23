@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import turb_template.template_dir.globals as g
+import globals as g
 
 alpha_hyd = 2 ** (1 / 3)  # 1.26 # 1.383
 alpha_mhd = (2 * 4.2 / 0.77) ** (1 / 3)
@@ -36,7 +36,7 @@ def dedt_calc_hydro(M, rho, T_hot, L, mu=0.5):
     """
 
     cs_new = cs_calc(T_hot, mu)
-    # print(f'cs_new: {cs_new}')
+    print(f"cs_hot: {cs_new}")
 
     dedt_req = rho * (cs_new**3) * (L**2) * (M**3) / (alpha_hyd**3)
 
