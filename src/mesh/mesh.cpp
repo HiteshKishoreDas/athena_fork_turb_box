@@ -1663,6 +1663,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
 //*_________________________________
 
   int cloud_flag = pin->GetInteger("problem","cloud_flag");
+  int rescale_flag = pin->GetInteger("problem","rescale_flag");
 
   if (cloud_flag==1){
 
@@ -1696,53 +1697,55 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
 
     if (sim_time > 0.75*t_cloud){
 
-      //* Rescale temperatures
-      for (int b=0; b<nblocal; ++b) {
+      if (rescale_flag==1){
+        //* Rescale temperatures
+        for (int b=0; b<nblocal; ++b) {
 
-        MeshBlock *pmb = my_blocks(b);
-    
-        Real local_T_sum_1 = 0.0;
-        Real global_T_sum_1;
+          MeshBlock *pmb = my_blocks(b);
 
-        // Calculate average temperature before rescaling
-        for (int k = pmb->ks; k <= pmb->ke; ++k) {
-          for (int j = pmb->js; j <= pmb->je; ++j) {
-            for (int i = pmb->is; i <= pmb->ie; ++i) {
+          Real local_T_sum_1 = 0.0;
+          Real global_T_sum_1;
 
-              Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
-              
-              local_T_sum_1 += temp;
+          // Calculate average temperature before rescaling
+          for (int k = pmb->ks; k <= pmb->ke; ++k) {
+            for (int j = pmb->js; j <= pmb->je; ++j) {
+              for (int i = pmb->is; i <= pmb->ie; ++i) {
 
+                Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+
+                local_T_sum_1 += temp;
+
+              }
             }
-          }
-        }//End of for loop over domain
+          }//End of for loop over domain
 
-        MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
+          MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
 
-        Real N_cells = nbtotal*(pmb->ke-pmb->ks+1)*(pmb->je-pmb->js+1)*(pmb->ie-pmb->is+1);
-        Real T_avg = global_T_sum_1/N_cells; //* Average temperature
+          Real N_cells = nbtotal*(pmb->ke-pmb->ks+1)*(pmb->je-pmb->js+1)*(pmb->ie-pmb->is+1);
+          Real T_avg = global_T_sum_1/N_cells; //* Average temperature
 
 
-        // Rescaling the temperature
-        for (int k = pmb->ks; k <= pmb->ke; ++k) {
-          for (int j = pmb->js; j <= pmb->je; ++j) {
-            for (int i = pmb->is; i <= pmb->ie; ++i) {
+          // Rescaling the temperature
+          for (int k = pmb->ks; k <= pmb->ke; ++k) {
+            for (int j = pmb->js; j <= pmb->je; ++j) {
+              for (int i = pmb->is; i <= pmb->ie; ++i) {
 
-              Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
-              Real T_new = temp*(T_hot_req/T_avg);
+                Real temp  = (pmb->phydro->w(IPR,k,j,i) / pmb->phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+                Real T_new = temp*(T_hot_req/T_avg);
 
-              pmb->phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*pmb->phydro->u(IDN,k,j,i)/(g-1);
+                pmb->phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*pmb->phydro->u(IDN,k,j,i)/(g-1);
 
+              }
             }
-          }
-        } //End of for loop over domain
+          } //End of for loop over domain
 
-      } // End of loop over meshblocks
+        } // End of loop over meshblocks
 
-      printf("______________________________\n");
-      printf("__Temperature rescaled!_______\n");
-      printf("______________________________\n");
+        printf("______________________________\n");
+        printf("__Temperature rescaled!_______\n");
+        printf("______________________________\n");
 
+      } // End of temperature rescaling section
 
       //* Adding the cloud
       for (int b=0; b<nblocal; ++b) {
