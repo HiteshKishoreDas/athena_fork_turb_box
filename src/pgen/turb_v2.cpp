@@ -94,28 +94,9 @@ static Real cloud_radius;
 static Real cloud_time;
 static Real cloud_chi;
 
+static Real heating_rate;
+
 //TODO: Double definition at code_unit.hpp, figure out a better way
-// Relevant temperatures
-// static Real T_floor   = 1e4;   // in K
-// static Real T_ceil    = 1e8;   // in K
-// static Real T_hot     = 1e7;
-// static Real T_hot_req = 1e7;
-// static Real T_cold    = 2*1e4;
-// static Real T_cut_mul = 0.6;
-// static Real T_cut     = T_cut_mul*T_hot_req;
-
-//* Defined in "../utils/code_units.hpp"
-// in terms of solar abundances
-// static Real Zsol = 1.0;
-// static Real Xsol = 1.0;
-
-// static Real X = Xsol * 0.7381;
-// static Real Z = Zsol * 0.0134;
-// static Real Y = 1 - X - Z;
-
-// static Real mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
-// static Real mue = 2.0/(1.0+X);
-// static Real muH = 1.0/X;
 
 // Cloud position
 static Real cloud_pos_x = 0.0;
@@ -152,6 +133,8 @@ void read_input (ParameterInput *pin){
   cloud_time   = pin->GetReal("problem","cloud_time");
   cloud_chi    = pin->GetReal("problem","cloud_chi");
 
+  heating_rate = pin->GetReal("problem","heating");
+
   T_floor      = pin->GetReal("problem","T_floor");
   T_ceil       = pin->GetReal("problem","T_ceil");
   T_hot        = pin->GetReal("problem","T_hot");
@@ -162,16 +145,16 @@ void read_input (ParameterInput *pin){
 
   // T_cut = T_cut_mul*T_hot_req;
 
-  Xsol            = pin->GetReal("problem","Xsol");
-  Zsol            = pin->GetReal("problem","Zsol");
+  // Xsol            = pin->GetReal("problem","Xsol");
+  // Zsol            = pin->GetReal("problem","Zsol");
 
-  X = Xsol * 0.7381;
-  Z = Zsol * 0.0134;
-  Y = 1 - X - Z;
+  // X = Xsol * 0.7381;
+  // Z = Zsol * 0.0134;
+  // Y = 1 - X - Z;
 
-  mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
-  mue = 2.0/(1.0+X);
-  muH = 1.0/X;
+  // mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
+  // mue = 2.0/(1.0+X);
+  // muH = 1.0/X;
 
   cloud_pos_x  = pin->GetReal("problem","cloud_pos_x");
   cloud_pos_y  = pin->GetReal("problem","cloud_pos_y");
@@ -242,7 +225,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
               Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
-              cons(IEN,k,j,i) += ccool;
+              cons(IEN,k,j,i) += ccool + heating_rate;
               total_cooling -= ccool;
             }
 
@@ -359,7 +342,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(10);
+    AllocateUserHistoryOutput(11);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -371,16 +354,18 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
     EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(10, T_sum, "T_sum");
 
   }
   else {
-    AllocateUserHistoryOutput(5);
+    AllocateUserHistoryOutput(6);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
     EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(5, T_sum, "T_sum");
   }
 
   

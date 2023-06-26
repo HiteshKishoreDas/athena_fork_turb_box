@@ -87,6 +87,29 @@ Real rho_sq_sum(MeshBlock *pmb, int iout){
   return rho_sq_sum;
 }
 
+Real T_sum (MeshBlock *pmb, int iout){
+
+  Real T_sum = 0;
+
+  int is=pmb->is, ie=pmb->ie, js=pmb->js, je=pmb->je, ks=pmb->ks, ke=pmb->ke;
+
+  for(int k=ks; k<=ke; k++) {
+    for(int j=js; j<=je; j++) {
+      for(int i=is; i<=ie; i++) {
+        
+        Real rho = pmb->phydro->u(IDN,k,j,i);
+        Real prs = pmb->phydro->w(IPR,k,j,i);
+
+        T_sum += prs/rho * KELVIN * mu;
+
+      }
+    }
+  }
+
+  return T_sum;
+
+}
+
 Real c_s_sum(MeshBlock *pmb, int iout){
 
   Real c_s_sum = 0;

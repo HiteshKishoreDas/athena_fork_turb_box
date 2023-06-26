@@ -77,6 +77,8 @@ rseed      = 1                   # if non-negative, seed will be set by hand (sl
 
 <problem>
 
+heating = 0.001                  # constant volume heating rate
+
 turb_flag    = 2                 # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
 
 # User-defined variables:
@@ -98,8 +100,8 @@ T_cold       = 80000             # cold medium temperature, used in cold gas mas
 T_cut_mul    = 0.5               # T_cut = T_hot_req * T_cut_mul, gas higher than T_cut is not cooled
 T_cut        = 2000000.0         # gas higher than T_cut is not cooled
 
-Xsol            = 1.0            # H-abundance in solar abundance
-Zsol            = 1.0            # metallicity in solar abundance
+# Xsol         = 1.0            # Change H-abundance src/utils/code_units
+# Zsol         = 1.0            # Change metallicity src/utils/code_units
 
 cloud_pos_x  = 0.0               # cloud center position x-coordinate
 cloud_pos_y  = 0.0               # cloud center position y-coordinate

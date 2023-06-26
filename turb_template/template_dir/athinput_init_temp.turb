@@ -76,6 +76,8 @@ rseed      = !!RSEED!!     # if non-negative, seed will be set by hand (slow PS 
 
 <problem>
 
+heating = !!HEAT!!                  # constant volume heating rate
+
 turb_flag    = 2    # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
 
 # User-defined variables:
@@ -97,8 +99,8 @@ T_cold       = !!T_COLD!!       # cold medium temperature, used in cold gas mass
 T_cut_mul    = !!T_CUT_MUL!!    # T_cut = T_hot_req * T_cut_mul, gas higher than T_cut is not cooled
 T_cut        = !!T_CUT!!        # gas higher than T_cut is not cooled
 
-Xsol         = !!XSOL!!         # H-abundance in solar abundance
-Zsol         = !!ZSOL!!         # metallicity in solar abundance
+# Xsol         = !!XSOL!!         # H-abundance in solar abundance
+# Zsol         = !!ZSOL!!         # metallicity in solar abundance
 
 cloud_pos_x  = !!CLOUD_POS_X!!  # cloud center position x-coordinate
 cloud_pos_y  = !!CLOUD_POS_Y!!  # cloud center position y-coordinate
