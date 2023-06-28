@@ -52,5 +52,7 @@ static Real T_cold    = 2*1e4;
 static Real T_cut_mul = 0.6;
 static Real T_cut     = T_cut_mul*T_hot_req;
 
+static Real g = 5./3.;
+
 
 #endif

@@ -17,6 +17,7 @@
 #include "../eos/eos.hpp"
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
+#include "../parameter_input.hpp"
 
 #include "code_units.hpp"
 

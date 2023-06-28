@@ -36,8 +36,8 @@
 //! Remove if not required
 // #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
 
-// #include "../utils/townsend_cooling.hpp"  // T_new()
-#include "../utils/townsend_cooling_max.hpp" // T_new()
+// #include "../utils/townsend_cooling.hpp"  // T_new() : Implementation by Hitesh (buggy)
+#include "../utils/townsend_cooling_max.hpp" // T_new() : Impolementation by Max (works)
 
 #include "../utils/hst_func.hpp"             // All history output functions
 #include "../utils/code_units.hpp"           // Code units and constants
@@ -184,7 +184,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
   Real t_cloud = cloud_time;
 
-  // printf("Inside cooling function stuff!\n");
+  // printf("T_floor =  %lf\n", T_floor);
 
   for (int k = pmb->ks; k <= pmb->ke; ++k) {
     for (int j = pmb->js; j <= pmb->je; ++j) {
