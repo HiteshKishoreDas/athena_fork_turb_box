@@ -225,7 +225,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
               Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
-              cons(IEN,k,j,i) += ccool + heating_rate;
+              cons(IEN,k,j,i) += ccool + heating_rate*dt;
               total_cooling -= ccool;
             }
 
