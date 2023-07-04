@@ -252,7 +252,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
           Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
           cons(IEN,k,j,i) += ccool;
-          total_cooling -= ccool;
+          // total_cooling -= ccool;
 
         }
 
