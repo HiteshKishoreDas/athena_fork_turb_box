@@ -248,7 +248,7 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
         else{  // If T<=T_floor
 
-          printf("+");
+          // printf("+");
 
           Real ccool = ((T_floor-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1); 
           cons(IEN,k,j,i) += ccool;
