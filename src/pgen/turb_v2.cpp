@@ -53,7 +53,7 @@ void myprint(string msg);
 
 static Real tfloor, tnotcool, tcut_hst, r_drop;
 static Real Lambda_fac, Lambda_fac_time;         // for boosting cooling
-static Real total_cooling;
+static Real total_cooling = 0.0;
 
 // Returns unique pointer
 // This is a function in C++13 onwards
@@ -226,6 +226,8 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
               Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
               cons(IEN,k,j,i) += ccool + heating_rate*dt;
+              // printf("temp = %lf \n", temp);
+              // printf("temp_new = %lf \n", temp_new);
               total_cooling -= ccool;
             }
 

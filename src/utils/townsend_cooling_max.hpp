@@ -6,7 +6,8 @@
 
 #include "code_units.hpp"
 
-static bool DEBUG_FLAG = false; //true;
+static bool DEBUG_FLAG = false;
+// static bool DEBUG_FLAG = true;
 
 class Cooling {
 public:
@@ -486,12 +487,18 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
   Real t_n    = cool_t(nbins-1);
   Real coef_n = cool_coef(nbins-1) * Lambda_fac;
 
+
   if (DEBUG_FLAG){
     printf("Get the index of the right temperature bin\n");
   }
+
+  // TODO: Change to binary search or direct calculation
   // Get the index of the right temperature bin
   int idx = 0;
   while ((idx < nbins-2) && (cool_t(idx+1) < temp)) { idx += 1; }
+
+  // t_n    = cool_t(idx+2);
+  // coef_n = cool_coef(idx+2) * Lambda_fac;
 
   if (DEBUG_FLAG){
     printf("Look up the corresponding slope and coefficient\n");
@@ -534,9 +541,23 @@ Real Cooling::townsend(Real temp, Real rho, Real const dt, Real Lambda_fac)
   }
   // Compute the Inverse Temporal Evolution Function Y^{-1}(Y) (Eq. A7)
   Real oms  = 1.0 - slope;
+  // Real tnew = temp;
+
   Real tnew = t_i*std::pow(1-oms*(coef/coef_n)*(t_n/t_i)*(tef_adj-tef_i),1/oms);
+  
+  if (idx == 0) {
+    tnew = t_i*std::exp(-1.0*(coef/coef_n)*(t_n/t_i)*(tef_adj-tef_i));
+    printf("Got idx==0 \n");
+  }
+
 
   if (DEBUG_FLAG){
+
+    printf("\n\ntnew = %lf \n\n t_n = %lf\n t_i = %lf \n", tnew, t_n, t_i);
+    printf("coef = %lf \n coef_n = %lf \n", coef, coef_n);
+    printf("tef_adj = %lf \n tef_i = %lf \n", tef_adj, tef_i);
+    printf("idx = %d \n slope = %lf \n oms = %lf \n", idx, slope, oms);
+
     printf("End of Cooling::townsend!\n");
   }
   // Return the new temperature if it is still above the temperature floor
