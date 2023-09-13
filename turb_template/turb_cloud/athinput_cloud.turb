@@ -84,6 +84,7 @@ turb_flag    = 2                 # 1 for decaying, 2 (impulsive) or 3 (continuou
 heating = 0.001                  # constant volume heating rate
 
 cooling_flag = 1                 # set to 1 to turn on cooling, 0 to turn it off
+global_cooling_flag = 1         # set to 1 to turn on uniform global cooling, 0 to turn it off
 cloud_flag   = 1                 # set to 1 to add the cloud on restart, 0 to not 
 
 amb_rho      = 1.0               # density of the ambient medium

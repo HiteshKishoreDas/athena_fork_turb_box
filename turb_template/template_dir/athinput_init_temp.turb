@@ -83,6 +83,7 @@ turb_flag    = 2    # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven
 # User-defined variables:
 
 cooling_flag = 0                # set to 1 to turn on cooling, 0 to turn it off
+global_cooling_flag = 0         # set to 1 to turn on uniform global cooling, 0 to turn it off
 cloud_flag   = 0                # set to 1 to add the cloud on restart, 0 to not  
 
 amb_rho      = !!AMB_RHO!!      # ambient density, in code units
