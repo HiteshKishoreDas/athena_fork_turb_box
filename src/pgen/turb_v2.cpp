@@ -87,6 +87,7 @@ static int n2 = 64;
 static int n3 = 64;
 
 static int cooling_flag = 0;
+static int global_cooling_flag = 0;
 
 static Real amb_rho = 1.0;
 
@@ -126,6 +127,7 @@ void read_input (ParameterInput *pin){
   n3 = pin->GetInteger("mesh","nx3");
 
   cooling_flag = pin->GetInteger("problem","cooling_flag");
+  global_cooling_flag = pin->GetInteger("problem","global_cooling_flag");
 
   amb_rho      = pin->GetReal("problem","amb_rho");
 
@@ -194,6 +196,8 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
         if (temp > T_floor) {
 
+          if (cooling_flag!=0){
+
             //* For own townsend cooling
 
             // Real *lam_para = Lam_file_read(temp);
@@ -225,16 +229,14 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
 
               Real ccool = ((temp_new-temp)/(KELVIN*mu))*cons(IDN,k,j,i)/(g-1);
 
-              cons(IEN,k,j,i) += ccool + heating_rate*dt;
+              
+              cons(IEN,k,j,i) += ccool;
+      
+
               // printf("temp = %lf \n", temp);
               // printf("temp_new = %lf \n", temp_new);
               total_cooling -= ccool;
-            }
-
-
-            //*_____________________________
-            
-
+            } // if (temp<T_cut)
 
             // ________________________________
             // FOR DEBUG PURPOSES
@@ -245,8 +247,9 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
             // ________________________________
 
 
+          } // if (cooling_flag!=0)
           
-        }
+        } // if (temp > T_floor)
 
         else{  // If T<=T_floor
 
@@ -256,11 +259,15 @@ void townsend_cooling(MeshBlock *pmb, const Real time, const Real dt,
           cons(IEN,k,j,i) += ccool;
           // total_cooling -= ccool;
 
+        } // else, If T<=T_floor
+
+        if (global_cooling_flag!=0){
+         cons(IEN,k,j,i) += heating_rate*dt;
         }
 
-      }
-    }
-  }
+      } // for (int i = pmb->is; i <= pmb->ie; ++i)
+    } // for (int j = pmb->js; j <= pmb->je; ++j)
+  } // for (int k = pmb->ks; k <= pmb->ke; ++k)
 
   return;
 }
@@ -279,7 +286,7 @@ void Source(MeshBlock *pmb, const Real time, const Real dt,
              const AthenaArray<Real> &bcc, AthenaArray<Real> &cons,
              AthenaArray<Real> &cons_scalar) {
 
-  if (cooling_flag!=0){
+  if ((cooling_flag!=0)||(global_cooling_flag!=0)){
   
     if (!cooling_flag_print_count){ 
         printf("___________________________________________\n");
