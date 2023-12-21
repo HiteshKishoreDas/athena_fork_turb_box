@@ -1660,6 +1660,8 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
 
 //*_________________________________
 //! NEW STUFF ADDED BELOW -Hitesh
+//! Note: No. of cores should be equal to no. of Meshblocks
+//! for this code to work properly.
 //*_________________________________
 
   int cloud_flag = pin->GetInteger("problem","cloud_flag");
