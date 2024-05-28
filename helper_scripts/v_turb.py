@@ -91,15 +91,6 @@ def dedt_calc_mhd(M, rho, T_hot, L, mu=0.5):
 
 
 def cs_calc(T_hot, mu=0.5):
-    # cs_ini = 0.06725645065307617
-
-    # cs_new = cs_ini*np.sqrt(T_hot/1e7)
-
-    M = 1e-3
-    R = 8.31446261815324
-
-    # mu = 0.5
-
     kB = 1.38 * 1e-23
     mp = 1.66 * 1e-27
 

@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-./athena -i $1 -m $2 
-
-mpiexec -n $2 ./athena -i $1
