@@ -99,11 +99,11 @@ cloud_chi    = 100               # density contrast of the cloud, rho_cloud/amb_
 T_floor      = 400             # floor temperature in the simulation
 T_ceil       = 100000000         # ceiling temperature in the simulation
 
-T_hot_req    = 4000000           # hot medium temperature required, reset to this on restart, if cloud_flag is 1
-T_hot        = 400000            # initial hot medium temperature (box heats up due to turbulence)
+T_hot_req    = 800000           # hot medium temperature required, reset to this on restart, if cloud_flag is 1
+T_hot        = 800000            # initial hot medium temperature (box heats up due to turbulence)
 T_cold       = 800             # cold medium temperature, used in cold gas mass calculation
 T_cut_mul    = 0.5               # T_cut = T_hot_req * T_cut_mul, gas higher than T_cut is not cooled
-T_cut        = 2000000.0         # gas higher than T_cut is not cooled
+T_cut        = 400000         # gas higher than T_cut is not cooled
 
 # Xsol         = 1.0            # Change H-abundance src/utils/code_units
 # Zsol         = 1.0            # Change metallicity src/utils/code_units
