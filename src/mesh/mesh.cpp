@@ -1721,9 +1721,14 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
             }
           }//End of for loop over domain
 
+#ifdef MPI_PARALLEL
           MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
-
           Real N_cells = nbtotal*(pmb->ke-pmb->ks+1)*(pmb->je-pmb->js+1)*(pmb->ie-pmb->is+1);
+#else
+          global_T_sum_1 = local_T_sum_1;
+          Real N_cells = (pmb->ke-pmb->ks+1)*(pmb->je-pmb->js+1)*(pmb->ie-pmb->is+1);
+#endif // #ifdef MPI_PARALLEL
+
           Real T_avg = global_T_sum_1/N_cells; //* Average temperature
 
 
