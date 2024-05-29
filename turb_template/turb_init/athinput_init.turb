@@ -89,6 +89,7 @@ cs_hot = 0.34
 cooling_flag = 0                 # set to 1 to turn on cooling, 0 to turn it off
 global_cooling_flag = 0         # set to 1 to turn on uniform global cooling, 0 to turn it off
 cloud_flag   = 0                 # set to 1 to add the cloud on restart, 0 to not 
+rescale_flag = 0                 # If cloud_flag is 1, checks for rescaling the temperature on restart
 
 amb_rho      = 1.0               # density of the ambient medium, in code units
 
