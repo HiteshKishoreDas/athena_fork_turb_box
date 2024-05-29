@@ -1685,17 +1685,6 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
     Real T_hot_req  = pin->GetReal("problem","T_hot_req");
 
     Real sim_time = time;
-    
-    Real Xsol = pin->GetReal("problem","Xsol");
-    Real Zsol = pin->GetReal("problem","Zsol");
-
-    Real X = Xsol * 0.7381;
-    Real Z = Zsol * 0.0134;
-    Real Y = 1 - X - Z;
-
-    Real mu  = 1.0/(2.*X+ 3.*(1.-X-Z)/4.+ Z/2.);
-    Real mue = 2.0/(1.0+X);
-    Real muH = 1.0/X;
 
     if (sim_time > 0.75*t_cloud){
 
