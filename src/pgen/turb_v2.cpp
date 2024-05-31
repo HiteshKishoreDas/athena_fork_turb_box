@@ -145,6 +145,10 @@ void read_input (ParameterInput *pin){
   T_cut_mul    = pin->GetReal("problem","T_cut_mul");
   T_cut        = pin->GetReal("problem","T_cut");
 
+  printf("T_floor = %lf\n", T_floor);
+  printf("T_ceil = %lf\n", T_ceil);
+  printf("T_hot = %lf\n", T_hot);
+
   // T_cut = T_cut_mul*T_hot_req;
 
   // Xsol            = pin->GetReal("problem","Xsol");
