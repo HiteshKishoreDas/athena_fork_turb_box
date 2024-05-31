@@ -44,13 +44,13 @@ static Real mue = 2.0/(1.0+X);
 static Real muH = 1.0/X;
 
 // Relevant temperatures
-static Real T_floor   = 1e4;   // in K
-static Real T_ceil    = 1e8;   // in K
-static Real T_hot     = 1e7;
-static Real T_hot_req = 1e7;
-static Real T_cold    = 2*1e4;
-static Real T_cut_mul = 0.6;
-static Real T_cut     = T_cut_mul*T_hot_req;
+// static Real T_floor   = 1e4;   // in K
+// static Real T_ceil    = 1e8;   // in K
+// static Real T_hot     = 1e7;
+// static Real T_hot_req = 1e7;
+// static Real T_cold    = 2*1e4;
+// static Real T_cut_mul = 0.6;
+// static Real T_cut     = T_cut_mul*T_hot_req;
 
 static Real g = 5./3.;
 
