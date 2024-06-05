@@ -142,6 +142,7 @@ void read_input (ParameterInput *pin){
   T_hot        = pin->GetReal("problem","T_hot");
   T_hot_req    = pin->GetReal("problem","T_hot_req");
   T_cold       = pin->GetReal("problem","T_cold");
+  T_warm       = pin->GetReal("problem","T_warm");
   T_cut_mul    = pin->GetReal("problem","T_cut_mul");
   T_cut        = pin->GetReal("problem","T_cut");
 
@@ -366,8 +367,9 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(6, By_sum, "By_sum");
     EnrollUserHistoryOutput(7, Bz_sum, "Bz_sum");
     EnrollUserHistoryOutput(8, cold_gas, "cold_gas");
-    EnrollUserHistoryOutput(9, hst_total_cooling, "total_cooling");
-    EnrollUserHistoryOutput(10, T_sum, "T_sum");
+    EnrollUserHistoryOutput(9, warm_gas, "warm_gas");
+    EnrollUserHistoryOutput(10, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(11, T_sum, "T_sum");
 
   }
   else {
@@ -377,8 +379,9 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
     EnrollUserHistoryOutput(2, c_s_sum, "c_s_sum");
     EnrollUserHistoryOutput(3, cold_gas, "cold_gas");
-    EnrollUserHistoryOutput(4, hst_total_cooling, "total_cooling");
-    EnrollUserHistoryOutput(5, T_sum, "T_sum");
+    EnrollUserHistoryOutput(4, warm_gas, "warm_gas");
+    EnrollUserHistoryOutput(5, hst_total_cooling, "total_cooling");
+    EnrollUserHistoryOutput(6, T_sum, "T_sum");
   }
 
   

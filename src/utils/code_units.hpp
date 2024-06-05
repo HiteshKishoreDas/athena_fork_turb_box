@@ -49,6 +49,7 @@ static Real T_ceil;   // in K
 static Real T_hot;
 static Real T_hot_req;
 static Real T_cold;
+static Real T_warm;
 static Real T_cut_mul;
 static Real T_cut;
 
