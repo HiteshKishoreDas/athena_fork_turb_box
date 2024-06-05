@@ -8,10 +8,11 @@
 (cd $ATHENA_DIR && 
 ./configure.py \
 --prob turb_v2 \
-# -b  \
+# -b  \  # Necessary to remove this line if magnetic fields are not needed
 -fft -mpi  \
 -hdf5 -h5double  \
 --mpiccmd mpiicc  \
+--nscalars=1  \
 --include=$FFTW_HOME/include  \
 --include=$HDF5_HOME/include  \
 --lib_path=$FFTW_HOME/lib  \
