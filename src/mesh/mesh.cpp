@@ -1744,6 +1744,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
       } // End of temperature rescaling section
 
       //* Adding the cloud
+      constexpr int scalar_norm = NSCALARS > 0 ? NSCALARS : 1.0;
       for (int b=0; b<nblocal; ++b) {
         
         MeshBlock *pmb = my_blocks(b);
@@ -1826,6 +1827,14 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
                 //_______________________________________________________//
 
                 pmb->phydro->u(IEN,k,j,i) = IE_in + KE_fn + BE_fn;
+
+
+                // Add scalar to the cloud
+                if (NSCALARS > 0) {
+                  for (int n=0; n<NSCALARS; ++n) {
+                    pmb->pscalars->s(n,k,j,i)  = 1.0/scalar_norm;
+                  }
+                }
 
                 printf("Cloud added here! :) \n");
                 printf("Density: %lf\n", pmb->phydro->u(IDN,k,j,i));

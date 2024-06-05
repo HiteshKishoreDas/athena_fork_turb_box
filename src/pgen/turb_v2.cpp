@@ -32,6 +32,7 @@
 #include "../mesh/mesh.hpp"
 #include "../parameter_input.hpp"
 #include "../utils/utils.hpp"
+#include "../scalars/scalars.hpp"
 
 //! Remove if not required
 // #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
@@ -356,7 +357,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   //* History outputs
   if (MAGNETIC_FIELDS_ENABLED) {
 
-    AllocateUserHistoryOutput(11);
+    AllocateUserHistoryOutput(12);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -373,7 +374,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 
   }
   else {
-    AllocateUserHistoryOutput(6);
+    AllocateUserHistoryOutput(7);
 
     EnrollUserHistoryOutput(0, rho_sum, "rho_sum");
     EnrollUserHistoryOutput(1, rho_sq_sum, "rho_sq_sum");
@@ -399,12 +400,11 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
   Real g   = pin->GetReal("hydro","gamma");
+  constexpr int scalar_norm = NSCALARS > 0 ? NSCALARS : 1.0;
 
   // Real l_shatter = cooler->tcool(tfloor * unit_temp,
 	// 			 drat * t_drop / tfloor * unit_rho) / unit_time * \
   //   sqrt(gamma * tfloor);
-
-
 
   // Read/set problem parameters
   Real sound_speed = sqrt(g*CONST_kB*T_floor / (mu*CONST_amu) );
@@ -455,6 +455,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
         if (NON_BAROTROPIC_EOS) {
           phydro->u(IEN,k,j,i) = (T_hot/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+        }
+
+        // Add scalar to the cloud
+        if (NSCALARS > 0) {
+          for (int n=0; n<NSCALARS; ++n) {
+            pscalars->s(n,k,j,i)  = 0.0/scalar_norm;
         }
 
         // printf("rho: %f\n",phydro->u(IDN,k,j,i));
