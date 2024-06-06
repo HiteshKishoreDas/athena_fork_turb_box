@@ -400,7 +400,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
   Real g   = pin->GetReal("hydro","gamma");
-  constexpr int scalar_norm = NSCALARS > 0 ? NSCALARS : 1.0;
+  constexpr Real scalar_norm = NSCALARS > 0 ? (Real)NSCALARS : 1.0;
 
   // Real l_shatter = cooler->tcool(tfloor * unit_temp,
 	// 			 drat * t_drop / tfloor * unit_rho) / unit_time * \
@@ -462,7 +462,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           for (int n=0; n<NSCALARS; ++n) {
             pscalars->s(n,k,j,i)  = 0.0/scalar_norm;
         }
-
+        }
         // printf("rho: %f\n",phydro->u(IDN,k,j,i));
       }
     }
