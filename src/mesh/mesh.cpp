@@ -1832,7 +1832,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
                 // Add scalar to the cloud
                 if (NSCALARS > 0) {
                   for (int n=0; n<NSCALARS; ++n) {
-                    pmb->pscalars->s(n,k,j,i)  = 1.0/scalar_norm;
+                    pmb->pscalars->s(n,k,j,i)  = 1.0/scalar_norm *  pmb->phydro->u(IDN,k,j,i);
                   }
                 }
 
