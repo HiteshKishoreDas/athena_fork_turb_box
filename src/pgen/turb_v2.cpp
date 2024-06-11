@@ -33,6 +33,7 @@
 #include "../parameter_input.hpp"
 #include "../utils/utils.hpp"
 #include "../scalars/scalars.hpp"
+#include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
 
 //! Remove if not required
 // #include "../inputs/hdf5_reader.hpp"  // HDF5ReadRealArray()
@@ -115,7 +116,8 @@ static Real B_z = 1.0;
 static bool cooling_flag_print_count = false;
 
 bool temp_rescale_flag = true;
-bool cloud_init_flag   = true;
+int hdf_cloud_flag   = 0;
+int rescale_flag = 0;
 
 
 void read_input (ParameterInput *pin){
@@ -129,6 +131,8 @@ void read_input (ParameterInput *pin){
 
   cooling_flag = pin->GetInteger("problem","cooling_flag");
   global_cooling_flag = pin->GetInteger("problem","global_cooling_flag");
+  hdf_cloud_flag = pin->GetInteger("problem","hdf_cloud_flag");
+  rescale_flag = pin->GetInteger("problem","rescale_flag");
 
   amb_rho      = pin->GetReal("problem","amb_rho");
 
@@ -442,77 +446,388 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   // * Read static variables from the input file
   read_input(pin);
 
-  printf("Before pgen loop...................\n");
+  if (hdf_cloud_flag==0){
+    printf("Before pgen loop...................\n");
 
-  for (int k=ks; k<=ke; k++) {
-    for (int j=js; j<=je; j++) {
-      for (int i=is; i<=ie; i++) {
-        phydro->u(IDN,k,j,i) = amb_rho;
+    for (int k=ks; k<=ke; k++) {
+      for (int j=js; j<=je; j++) {
+        for (int i=is; i<=ie; i++) {
+          phydro->u(IDN,k,j,i) = amb_rho;
 
-        phydro->u(IM1,k,j,i) = 0.0;
-        phydro->u(IM2,k,j,i) = 0.0;
-        phydro->u(IM3,k,j,i) = 0.0;
+          phydro->u(IM1,k,j,i) = 0.0;
+          phydro->u(IM2,k,j,i) = 0.0;
+          phydro->u(IM3,k,j,i) = 0.0;
 
-        if (NON_BAROTROPIC_EOS) {
-          phydro->u(IEN,k,j,i) = (T_hot/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
-        }
+          if (NON_BAROTROPIC_EOS) {
+            phydro->u(IEN,k,j,i) = (T_hot/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+          }
 
-        // Add scalar to the cloud
-        if (NSCALARS > 0) {
-          for (int n=0; n<NSCALARS; ++n) {
-            pscalars->s(n,k,j,i)  = 0.0/scalar_norm;
-        }
-        }
-        // printf("rho: %f\n",phydro->u(IDN,k,j,i));
-      }
-    }
-  }
-
-  printf("After pgen loop...................\n");
-
-  // initialize interface B
-  if (MAGNETIC_FIELDS_ENABLED) {
-    
-    printf("________________________________________________\n");
-    printf("Inside Magnetic initialisation \n");
-    printf("________________________________________________\n");
-
-    for (int k=ks; k<=ke; ++k) {
-      for (int j=js; j<=je; ++j) {
-        for (int i=is; i<=ie+1; ++i) {
-          pfield->b.x1f(k,j,i) = B_x;
+          // Add scalar to the cloud
+          if (NSCALARS > 0) {
+            for (int n=0; n<NSCALARS; ++n) {
+              pscalars->s(n,k,j,i)  = 0.0/scalar_norm;
+          }
+          }
+          // printf("rho: %f\n",phydro->u(IDN,k,j,i));
         }
       }
     }
-    for (int k=ks; k<=ke; ++k) {
-      for (int j=js; j<=je+1; ++j) {
-        for (int i=is; i<=ie; ++i) {
-          pfield->b.x2f(k,j,i) = B_y;
-        }
-      }
-    }
-    for (int k=ks; k<=ke+1; ++k) {
-      for (int j=js; j<=je; ++j) {
-        for (int i=is; i<=ie; ++i) {
-          pfield->b.x3f(k,j,i) = B_z;
-        }
-      }
-    }
-    if (NON_BAROTROPIC_EOS) {
+
+    printf("After pgen loop...................\n");
+
+    // initialize interface B
+    if (MAGNETIC_FIELDS_ENABLED) {
+
+      printf("________________________________________________\n");
+      printf("Inside Magnetic initialisation \n");
+      printf("________________________________________________\n");
+
       for (int k=ks; k<=ke; ++k) {
         for (int j=js; j<=je; ++j) {
+          for (int i=is; i<=ie+1; ++i) {
+            pfield->b.x1f(k,j,i) = B_x;
+          }
+        }
+      }
+      for (int k=ks; k<=ke; ++k) {
+        for (int j=js; j<=je+1; ++j) {
           for (int i=is; i<=ie; ++i) {
-            phydro->u(IEN,k,j,i) += 0.5*(SQR(B_x) + SQR(B_y) + SQR(B_z));
+            pfield->b.x2f(k,j,i) = B_y;
+          }
+        }
+      }
+      for (int k=ks; k<=ke+1; ++k) {
+        for (int j=js; j<=je; ++j) {
+          for (int i=is; i<=ie; ++i) {
+            pfield->b.x3f(k,j,i) = B_z;
+          }
+        }
+      }
+      if (NON_BAROTROPIC_EOS) {
+        for (int k=ks; k<=ke; ++k) {
+          for (int j=js; j<=je; ++j) {
+            for (int i=is; i<=ie; ++i) {
+              phydro->u(IEN,k,j,i) += 0.5*(SQR(B_x) + SQR(B_y) + SQR(B_z));
+            }
           }
         }
       }
     }
-  }
 
-  printf("End of pgen.............................\n");
+    printf("End of pgen.............................\n");
+  }
+  else { // hdf_cloud_flag == 1
+
+    // Determine locations of initial values
+    std::string input_filename = pin->GetString("problem", "input_filename");
+    std::string dataset_cons = pin->GetString("problem", "dataset_cons");
+    int index_dens = pin->GetInteger("problem", "index_dens");
+    int index_mom1 = pin->GetInteger("problem", "index_mom1");
+    int index_mom2 = pin->GetInteger("problem", "index_mom2");
+    int index_mom3 = pin->GetInteger("problem", "index_mom3");
+    int index_etot = pin->GetInteger("problem", "index_etot");
+
+    std::string b1_input_filename = pin->GetString("problem", "b1_input_filename");
+    std::string b2_input_filename = pin->GetString("problem", "b2_input_filename");
+    std::string b3_input_filename = pin->GetString("problem", "b3_input_filename");
+
+    std::string dataset_b1 = "hydro";//pin->GetString("problem", "dataset_b1");
+    std::string dataset_b2 = "hydro";//pin->GetString("problem", "dataset_b2");
+    std::string dataset_b3 = "hydro";//pin->GetString("problem", "dataset_b3");
+  
+    // Set conserved array selections
+    int start_cons_file[5];
+    start_cons_file[1] = gid;
+    start_cons_file[2] = 0;
+    start_cons_file[3] = 0;
+    start_cons_file[4] = 0;
+    int start_cons_indices[5];
+    start_cons_indices[IDN] = index_dens;
+    start_cons_indices[IM1] = index_mom1;
+    start_cons_indices[IM2] = index_mom2;
+    start_cons_indices[IM3] = index_mom3;
+    start_cons_indices[IEN] = index_etot;
+    int count_cons_file[5];
+    count_cons_file[0] = 1;
+    count_cons_file[1] = 1;
+    count_cons_file[2] = block_size.nx3;
+    count_cons_file[3] = block_size.nx2;
+    count_cons_file[4] = block_size.nx1;
+    int start_cons_mem[4];
+    start_cons_mem[1] = ks;
+    start_cons_mem[2] = js;
+    start_cons_mem[3] = is;
+    int count_cons_mem[4];
+    count_cons_mem[0] = 1;
+    count_cons_mem[1] = block_size.nx3;
+    count_cons_mem[2] = block_size.nx2;
+    count_cons_mem[3] = block_size.nx1;
+  
+    // Set conserved values from file
+    for (int n = 0; n < NHYDRO; ++n) {
+      start_cons_file[0] = start_cons_indices[n];
+      start_cons_mem[0] = n;
+      HDF5ReadRealArray(input_filename.c_str(), dataset_cons.c_str(), 5, start_cons_file,
+                        count_cons_file, 4, start_cons_mem,
+                        count_cons_mem, phydro->u, true);
+    }
+  
+    // Set field array selections
+    int start_field_file[4];
+    start_field_file[0] = gid;
+    start_field_file[1] = 0;
+    start_field_file[2] = 0;
+    start_field_file[3] = 0;
+    int count_field_file[4];
+    count_field_file[0] = 1;
+    int start_field_mem[4];
+    start_field_mem[0] = 0;
+    start_field_mem[1] = ks;
+    start_field_mem[2] = js;
+    start_field_mem[3] = is;
+    int count_field_mem[3];
+  
+    // Set magnetic field values from file
+    if (MAGNETIC_FIELDS_ENABLED) {
+      // Set B1
+      count_field_file[1] = block_size.nx3;
+      count_field_file[2] = block_size.nx2;
+      count_field_file[3] = block_size.nx1 + 1;
+      count_field_mem[0] = block_size.nx3;
+      count_field_mem[1] = block_size.nx2;
+      count_field_mem[2] = block_size.nx1 + 1;
+      HDF5ReadRealArray(b1_input_filename.c_str(), dataset_b1.c_str(), 5, start_field_file,
+                        count_field_file, 4, start_field_mem,
+                        count_field_mem, pfield->b.x1f, true);
+  
+      // Set B2
+      count_field_file[1] = block_size.nx3;
+      count_field_file[2] = block_size.nx2 + 1;
+      count_field_file[3] = block_size.nx1;
+      count_field_mem[0] = block_size.nx3;
+      count_field_mem[1] = block_size.nx2 + 1;
+      count_field_mem[2] = block_size.nx1;
+      HDF5ReadRealArray(b2_input_filename.c_str(), dataset_b2.c_str(), 5, start_field_file,
+                        count_field_file, 4, start_field_mem,
+                        count_field_mem, pfield->b.x2f, true);
+  
+      // Set B3
+      count_field_file[1] = block_size.nx3 + 1;
+      count_field_file[2] = block_size.nx2;
+      count_field_file[3] = block_size.nx1;
+      count_field_mem[0] = block_size.nx3 + 1;
+      count_field_mem[1] = block_size.nx2;
+      count_field_mem[2] = block_size.nx1;
+      HDF5ReadRealArray(b3_input_filename.c_str(), dataset_b3.c_str(), 5, start_field_file,
+                        count_field_file, 4, start_field_mem,
+                        count_field_mem, pfield->b.x3f, true);
+    }
+  
+    // Make no-op collective reads if using MPI and ranks have unequal numbers of blocks
+  #ifdef MPI_PARALLEL
+    {
+      int num_blocks_this_rank = pmy_mesh->nblist[Globals::my_rank];
+      if (lid == num_blocks_this_rank - 1) {
+        int block_shortage_this_rank = 0;
+        for (int rank = 0; rank < Globals::nranks; ++rank) {
+          block_shortage_this_rank =
+              std::max(block_shortage_this_rank,
+                      pmy_mesh->nblist[rank] - num_blocks_this_rank);
+        }
+        for (int block = 0; block < block_shortage_this_rank; ++block) {
+          for (int n = 0; n < NHYDRO; ++n) {
+            start_cons_file[0] = start_cons_indices[n];
+            start_cons_mem[0] = n;
+            HDF5ReadRealArray(input_filename.c_str(), dataset_cons.c_str(), 5,
+                              start_cons_file, count_cons_file, 4,
+                              start_cons_mem, count_cons_mem,
+                              phydro->u, true, true);
+          }
+          if (MAGNETIC_FIELDS_ENABLED) {
+            count_field_file[1] = block_size.nx3;
+            count_field_file[2] = block_size.nx2;
+            count_field_file[3] = block_size.nx1 + 1;
+            count_field_mem[0] = block_size.nx3;
+            count_field_mem[1] = block_size.nx2;
+            count_field_mem[2] = block_size.nx1 + 1;
+            HDF5ReadRealArray(b1_input_filename.c_str(), dataset_b1.c_str(), 5,
+                              start_field_file, count_field_file, 4,
+                              start_field_mem, count_field_mem,
+                              pfield->b.x1f, true, true);
+            count_field_file[1] = block_size.nx3;
+            count_field_file[2] = block_size.nx2 + 1;
+            count_field_file[3] = block_size.nx1;
+            count_field_mem[0] = block_size.nx3;
+            count_field_mem[1] = block_size.nx2 + 1;
+            count_field_mem[2] = block_size.nx1;
+            HDF5ReadRealArray(b2_input_filename.c_str(), dataset_b2.c_str(), 5,
+                              start_field_file, count_field_file, 4,
+                              start_field_mem, count_field_mem,
+                              pfield->b.x2f, true, true);
+            count_field_file[1] = block_size.nx3 + 1;
+            count_field_file[2] = block_size.nx2;
+            count_field_file[3] = block_size.nx1;
+            count_field_mem[0] = block_size.nx3 + 1;
+            count_field_mem[1] = block_size.nx2;
+            count_field_mem[2] = block_size.nx1;
+            HDF5ReadRealArray(b3_input_filename.c_str(), dataset_b3.c_str(), 5,
+                              start_field_file, count_field_file, 4,
+                              start_field_mem, count_field_mem,
+                              pfield->b.x3f, true, true);
+          }
+        }
+      }
+    }
+  #endif
+
+
+  //* Rescale temperatures
+  if (rescale_flag==1){
+
+    Real local_T_sum_1 = 0.0;
+    Real global_T_sum_1;
+
+    // Calculate average temperature before rescaling
+    for (int k = ks; k <= ke; ++k) {
+      for (int j = js; j <= je; ++j) {
+        for (int i = is; i <= ie; ++i) {
+
+          Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+
+          local_T_sum_1 += temp;
+
+        }
+      }
+    }//End of for loop over domain
+
+    #ifdef MPI_PARALLEL //Parallel
+      MPI_Allreduce(&local_T_sum_1, &global_T_sum_1, 1, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
+      Real N_cells = pmy_mesh->nbtotal*(ke-ks+1)*(je-js+1)*(ie-is+1);
+    #else  // Serial
+      global_T_sum_1 = local_T_sum_1;
+      Real N_cells = (ke-ks+1)*(je-js+1)*(ie-is+1);
+    #endif // #ifdef MPI_PARALLEL
+
+    Real T_avg = global_T_sum_1/N_cells; //* Average temperature
+
+
+    // Rescaling the temperature
+    for (int k = ks; k <= ke; ++k) {
+      for (int j = js; j <= je; ++j) {
+        for (int i = is; i <= ie; ++i) {
+
+          Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+          Real T_new = temp*(T_hot_req/T_avg);
+
+          phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
+
+        }
+      }
+    } //End of for loop over domain
+
+
+    printf("______________________________\n");
+    printf("__Temperature rescaled!_______\n");
+    printf("______________________________\n");
+
+  } // End of temperature rescaling section
+
+
+  for (int k = ks; k <= ke; ++k) {
+    Real z_coord = pcoord->x3v(k);
+    for (int j = js; j <= je; ++j) {
+      Real y_coord = pcoord->x2v(j);
+      for (int i = is; i <= ie; ++i) {
+        Real x_coord = pcoord->x1v(i);
+
+        Real dist = (x_coord-cloud_pos_x)*(x_coord-cloud_pos_x);
+        dist     += (y_coord-cloud_pos_y)*(y_coord-cloud_pos_y);
+        dist     += (z_coord-cloud_pos_z)*(z_coord-cloud_pos_z);
+
+        // Inside the cloud region
+        if(dist <= cloud_radius*cloud_radius){
+
+          //Initial energy ______________________________________//
+          Real TE_in = phydro->u(IEN,k,j,i);
+
+          Real KE_in = phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          KE_in += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
+          KE_in += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
+          KE_in /= 2.0*phydro->u(IDN,k,j,i);
+
+          Real BE_in = 0.0;
+          if (MAGNETIC_FIELDS_ENABLED) {
+            BE_in += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
+            BE_in += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
+            BE_in += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
+          }
+
+          Real IE_in = TE_in - KE_in - BE_in;
+
+          //_______________________________________________________//
+
+          Real rho_temp = phydro->u(IDN,k,j,i);
+
+          Real temp = (IE_in * (g-1.0)/rho_temp) * KELVIN * mu ;
+
+          Real chi_lim = std::min(cloud_chi,temp/T_floor);
+          printf("chi_lim: %lf\n", chi_lim);
+
+
+          phydro->u(IDN,k,j,i) *= chi_lim;//*2.0;
+
+          phydro->u(IM1,k,j,i) /= sqrt(chi_lim);//*2.0;
+          phydro->u(IM2,k,j,i) /= sqrt(chi_lim);//*2.0;
+          phydro->u(IM3,k,j,i) /= sqrt(chi_lim);//*2.0;
+
+
+          //Final energy _________________________________________//
+
+          Real TE_fn = phydro->u(IEN,k,j,i);
+
+          Real KE_fn = phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          KE_fn += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
+          KE_fn += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
+          KE_fn /= 2.0*phydro->u(IDN,k,j,i);
+
+          Real BE_fn = 0.0;
+          if (MAGNETIC_FIELDS_ENABLED) {
+            BE_fn += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
+            BE_fn += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
+            BE_fn += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
+          }
+
+          Real IE_fn = TE_fn - KE_fn - BE_fn;
+
+          //_______________________________________________________//
+
+          phydro->u(IEN,k,j,i) = IE_in + KE_fn + BE_fn;
+
+
+          // Add scalar to the cloud
+          if (NSCALARS > 0) {
+            for (int n=0; n<NSCALARS; ++n) {
+              pscalars->s(n,k,j,i)  = 1.0/scalar_norm;
+            }
+          }
+
+          printf("Cloud added here! :) \n");
+          printf("Density: %lf\n", phydro->u(IDN,k,j,i));
+
+        } // If condition on cloud region closed
+
+      } // End of loop over i
+    } // End of loop over j
+  } // End of loop over k
+
+  printf("______________________________\n");
+  printf("__Cloud added!________________\n");
+  printf("______________________________\n");
+
+  } 
+    
 
   return;
-
 }
 
 

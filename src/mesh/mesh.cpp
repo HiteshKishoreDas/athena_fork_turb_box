@@ -1664,10 +1664,10 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
 //! for this code to work properly.
 //*_________________________________
 
-  int cloud_flag = pin->GetInteger("problem","cloud_flag");
+  int restart_cloud_flag = pin->GetInteger("problem","restart_cloud_flag");
   int rescale_flag = pin->GetInteger("problem","rescale_flag");
 
-  if (cloud_flag==1){
+  if (restart_cloud_flag==1){
 
     Real g = pin->GetReal("hydro","gamma");
 
