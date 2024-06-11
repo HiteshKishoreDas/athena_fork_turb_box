@@ -519,7 +519,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   else { // hdf_cloud_flag == 1
 
     // Determine locations of initial values
-    std::string input_filename = pin->GetString("problem", "input_filename");
+    std::string input_filename = pin->GetString("problem", "cons_input_filename");
     std::string dataset_cons = pin->GetString("problem", "dataset_cons");
     int index_dens = pin->GetInteger("problem", "index_dens");
     int index_mom1 = pin->GetInteger("problem", "index_mom1");

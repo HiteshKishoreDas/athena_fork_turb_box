@@ -89,7 +89,8 @@ cs_hot = 0.34                    # hot gas sound speed for T~4e4K
 
 cooling_flag = 1                 # set to 1 to turn on cooling, 0 to turn it off
 global_cooling_flag = 0         # set to 1 to turn on uniform global cooling, 0 to turn it off
-cloud_flag   = 1                 # set to 1 to add the cloud on restart, 0 to not 
+restart_cloud_flag   = 0                 # set to 1 to add the cloud on restart, 0 to not 
+hdf_cloud_flag   = 1                 # set to 1 to add the cloud after reading HDF5 file, 0 to not 
 rescale_flag = 1                 # If cloud_flag is 1, checks for rescaling the temperature on restart
 
 amb_rho      = 1.0               # density of the ambient medium, in code units
@@ -117,3 +118,16 @@ cloud_pos_z  = 0.0               # cloud center position z-coordinate
 B_x          = 0.0               # initial magnetic field in x-direction
 B_y          = 0.0               # initial magnetic field in y-direction
 B_z          = 0.0               # initial magnetic field in z-direction
+
+cons_input_filename = /dev/null  # name of HDF5 file containing initial conditions
+dataset_cons   = cons       # name of dataset containing conserved values
+index_dens     = 0          # index of density in conserved dataset
+index_etot     = 1          # index of energy in conserved dataset (for nonbarotropic EOS)
+index_mom1     = 2          # index of x1-momentum in conserved dataset
+index_mom2     = 3          # index of x2-momentum in conserved dataset
+index_mom3     = 4          # index of x3-momentum in conserved dataset
+
+b1_input_filename = /dev/null  # name of HDF5 file containing initial conditions
+b2_input_filename = /dev/null  # name of HDF5 file containing initial conditions
+b3_input_filename = /dev/null  # name of HDF5 file containing initial conditions
+
