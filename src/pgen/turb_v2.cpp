@@ -119,6 +119,13 @@ bool temp_rescale_flag = true;
 int hdf_cloud_flag   = 0;
 int rescale_flag = 0;
 
+static std::string b1_input_filename;
+static std::string b2_input_filename;
+static std::string b3_input_filename;
+
+static std::string dataset_b1;
+static std::string dataset_b2;
+static std::string dataset_b3;
 
 void read_input (ParameterInput *pin){
   /*
@@ -527,13 +534,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     int index_mom3 = pin->GetInteger("problem", "index_mom3");
     int index_etot = pin->GetInteger("problem", "index_etot");
 
-    std::string b1_input_filename = pin->GetString("problem", "b1_input_filename");
-    std::string b2_input_filename = pin->GetString("problem", "b2_input_filename");
-    std::string b3_input_filename = pin->GetString("problem", "b3_input_filename");
-
-    std::string dataset_b1 = "hydro";//pin->GetString("problem", "dataset_b1");
-    std::string dataset_b2 = "hydro";//pin->GetString("problem", "dataset_b2");
-    std::string dataset_b3 = "hydro";//pin->GetString("problem", "dataset_b3");
   
     // Set conserved array selections
     int start_cons_file[5];
@@ -571,7 +571,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
                         count_cons_file, 4, start_cons_mem,
                         count_cons_mem, phydro->u, true);
     }
-  
+
     // Set field array selections
     int start_field_file[4];
     start_field_file[0] = gid;
@@ -587,8 +587,18 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     start_field_mem[3] = is;
     int count_field_mem[3];
   
+  
     // Set magnetic field values from file
     if (MAGNETIC_FIELDS_ENABLED) {
+      b1_input_filename = pin->GetString("problem", "b1_input_filename");
+      b2_input_filename = pin->GetString("problem", "b2_input_filename");
+      b3_input_filename = pin->GetString("problem", "b3_input_filename");
+
+      dataset_b1 = "hydro";//pin->GetString("problem", "dataset_b1");
+      dataset_b2 = "hydro";//pin->GetString("problem", "dataset_b2");
+      dataset_b3 = "hydro";//pin->GetString("problem", "dataset_b3");
+
+
       // Set B1
       count_field_file[1] = block_size.nx3;
       count_field_file[2] = block_size.nx2;
