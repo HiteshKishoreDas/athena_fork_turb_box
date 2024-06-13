@@ -701,8 +701,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     for (int k = ks; k <= ke; ++k) {
       for (int j = js; j <= je; ++j) {
         for (int i = is; i <= ie; ++i) {
-
-          Real KE -= phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          Real KE = 0.0;
+          KE += phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
           KE += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
           KE += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
           KE /= 2.0*phydro->u(IDN,k,j,i);
@@ -740,7 +740,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     Real T_avg = global_T_sum_1/N_cells; //* Average temperature
     printf("T_avg: %lf \n",T_avg);
     printf("local_T_sum_1: %lf \n",local_T_sum_1);
-    printf("local avg T: %lf \n",local_T_sum_1 / 32768.);
+    printf("local avg T: %lf \n",local_T_sum_1 / 32768.);  // individual cell temperature
     printf("global_T_sum_1: %lf \n",global_T_sum_1);
     printf("N_cells: %lf \n",N_cells);
     printf("scaling_factor: %lf \n",T_hot_req/T_avg);
@@ -749,8 +749,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     for (int k = ks; k <= ke; ++k) {
       for (int j = js; j <= je; ++j) {
         for (int i = is; i <= ie; ++i) {
-
-          Real KE -= phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          Real KE = 0.0;
+          KE += phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
           KE += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
           KE += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
           KE /= 2.0*phydro->u(IDN,k,j,i);
