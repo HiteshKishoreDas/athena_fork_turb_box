@@ -702,9 +702,26 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
       for (int j = js; j <= je; ++j) {
         for (int i = is; i <= ie; ++i) {
 
-          Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
-          
-          printf("temp: %lf \n",temp);
+          Real KE -= phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          KE += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
+          KE += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
+          KE /= 2.0*phydro->u(IDN,k,j,i);
+
+          Real prs = phydro->u(IEN,k,j,i);
+          prs -= KE;
+
+          if (MAGNETIC_FIELDS_ENABLED) {
+            Real BE = 0.0;
+            BE += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
+            BE += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
+            BE += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
+
+            prs -= BE;
+          }
+
+          prs *= g-1;
+
+          Real temp  = (prs / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
 
           local_T_sum_1 += temp;
 
@@ -733,7 +750,26 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
       for (int j = js; j <= je; ++j) {
         for (int i = is; i <= ie; ++i) {
 
-          Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+          Real KE -= phydro->u(IM1,k,j,i) * phydro->u(IM1,k,j,i);
+          KE += phydro->u(IM2,k,j,i) * phydro->u(IM2,k,j,i);
+          KE += phydro->u(IM3,k,j,i) * phydro->u(IM3,k,j,i);
+          KE /= 2.0*phydro->u(IDN,k,j,i);
+
+          Real prs = phydro->u(IEN,k,j,i);
+          prs -= KE;
+
+          if (MAGNETIC_FIELDS_ENABLED) {
+            Real BE = 0.0;
+            BE += 0.5 * pfield->b.x1f(k,j,i) * pfield->b.x1f(k,j,i);
+            BE += 0.5 * pfield->b.x2f(k,j,i) * pfield->b.x2f(k,j,i);
+            BE += 0.5 * pfield->b.x3f(k,j,i) * pfield->b.x3f(k,j,i);
+
+            prs -= BE;
+          }
+
+          prs *= g-1;
+
+          Real temp  = (prs / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
           Real T_new = temp*(T_hot_req/T_avg);
 
           phydro->u(IEN,k,j,i) += ((T_new-temp)/(KELVIN*mu))*phydro->u(IDN,k,j,i)/(g-1);
