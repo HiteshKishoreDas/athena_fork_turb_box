@@ -693,6 +693,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         for (int i = is; i <= ie; ++i) {
 
           Real temp  = (phydro->w(IPR,k,j,i) / phydro->u(IDN,k,j,i)) * KELVIN * mu ;
+          
+          printf("temp: %lf \n",temp);
 
           local_T_sum_1 += temp;
 
@@ -709,7 +711,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     #endif // #ifdef MPI_PARALLEL
 
     Real T_avg = global_T_sum_1/N_cells; //* Average temperature
-
+    printf("T_avg: %lf \n",T_avg);
+    printf("local_T_sum_1: %lf \n",local_T_sum_1);
+    printf("local avg T: %lf \n",local_T_sum_1 / 32768.);
+    printf("global_T_sum_1: %lf \n",global_T_sum_1);
+    printf("N_cells: %lf \n",N_cells);
+    printf("scaling_factor: %lf \n",T_hot_req/T_avg);
 
     // Rescaling the temperature
     for (int k = ks; k <= ke; ++k) {
