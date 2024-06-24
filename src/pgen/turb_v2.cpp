@@ -860,7 +860,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           // Add scalar to the cloud
           if (NSCALARS > 0) {
             for (int n=0; n<NSCALARS; ++n) {
-              pscalars->s(n,k,j,i)  = 1.0/scalar_norm;
+              pscalars->s(n,k,j,i)  = 1.0*phydro->u(IDN,k,j,i)/scalar_norm;
             }
           }
 
