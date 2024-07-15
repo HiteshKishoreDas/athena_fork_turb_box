@@ -88,6 +88,8 @@ static int n1 = 64;
 static int n2 = 64;
 static int n3 = 64;
 
+static Real pfloor = 0;
+
 static int cooling_flag = 0;
 static int global_cooling_flag = 0;
 
@@ -149,6 +151,7 @@ void read_input (ParameterInput *pin){
 
   heating_rate = pin->GetReal("problem","heating");
 
+  pfloor       = pin->GetReal("hydro","pfloor"); // get the pressure floor
   T_floor      = pin->GetReal("problem","T_floor");
   T_ceil       = pin->GetReal("problem","T_ceil");
   T_hot        = pin->GetReal("problem","T_hot");
@@ -158,6 +161,7 @@ void read_input (ParameterInput *pin){
   T_cut_mul    = pin->GetReal("problem","T_cut_mul");
   T_cut        = pin->GetReal("problem","T_cut");
 
+  printf("pfloor = %lf\n", pfloor);
   printf("T_floor = %lf\n", T_floor);
   printf("T_ceil = %lf\n", T_ceil);
   printf("T_hot = %lf\n", T_hot);
@@ -893,6 +897,11 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
 
   Real g = peos->GetGamma();
 
+  // calcualte the number of cells for each mesh
+  int num_cell_mesh = (ke - ks + 1) * (je - js + 1) * (ie - is + 1);
+  int num_cell_pfloor = 0;  // number of cells < 2 * pfloor
+
+  // loop through each cell in the mesh
   for(int k=ks; k<=ke; k++) {
     for(int j=js; j<=je; j++) {
       for(int i=is; i<=ie; i++) {
@@ -931,8 +940,22 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin){
         
         user_out_var(0,k,j,i) = lum_cell/pmy_mesh->dt;      
       
+        // evaluate if the cell hits pfloor
+        if ((phydro->u(IPR,k,j,i)) < 2 * pfloor) {
+          num_cell_pfloor++;
+        }
+
       }
     }
+    }
+
+  // check for number of cells that are hitting the pressure floor
+  if (num_cell_pfloor >= static_cast<float>(num_cell_mesh) * 0.005) {  // return an error if > 0.5%
+    std::stringstream msg;
+    msg << "### FATAL ERROR in function" << std::endl;
+    std::cout << msg.str();
+    std::exit(EXIT_FAILURE);
+    return;
   }
 }
 
